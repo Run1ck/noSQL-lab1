@@ -5,14 +5,15 @@ import "fmt"
 type Status string
 
 const (
-	StatusNew      Status = "new"
-	StatusApproved Status = "approved"
-	StatusRejected Status = "rejected"
+	StatusNew       Status = "new"
+	StatusApproved  Status = "approved"
+	StatusRejected  Status = "rejected"
+	StatusCancelled Status = "cancelled"
 )
 
 func ParseStatus(s string) (Status, error) {
 	switch Status(s) {
-	case StatusNew, StatusApproved, StatusRejected:
+	case StatusNew, StatusApproved, StatusRejected, StatusCancelled:
 		return Status(s), nil
 	}
 	return "", fmt.Errorf("%w: %q", ErrInvalidStatus, s)

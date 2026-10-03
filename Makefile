@@ -7,7 +7,7 @@ down:
 	docker compose -f deploy/compose.yaml down
 
 run:
-	go run ./cmd/api
+	go run ./cmd/app
 
 test:
 	go test ./... -race

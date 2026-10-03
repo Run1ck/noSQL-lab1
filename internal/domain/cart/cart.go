@@ -1,65 +1,49 @@
 package cart
 
 import (
-	"slices"
+	"booking/internal/domain/service"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Item struct {
-	ServiceID   string
-	ServiceName string
-	Qty         int
+	ServiceID string
+	Date      service.Date
 }
 
 type Cart struct {
-	SessionID string
-	Items     []Item
+	UserID    uuid.UUID
+	Items     map[Item]struct{}
 	UpdatedAt time.Time
 }
 
-func New(sessionID string) (*Cart, error) {
-	if sessionID == "" {
-		return nil, ErrEmptySession
+func New(userID string) (*Cart, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, ErrInvalidUUID
 	}
 	return &Cart{
-		SessionID: sessionID,
+		UserID:    id,
+		Items:     make(map[Item]struct{}),
 		UpdatedAt: time.Now(),
 	}, nil
 }
 
-func (c *Cart) AddItem(serviceID, serviceName string, qty int) error {
-	if qty <= 0 {
-		return ErrInvalidQty
-	}
-
-	for i := range c.Items {
-		if c.Items[i].ServiceID == serviceID {
-			c.Items[i].Qty += qty
-			c.touch()
-			return nil
-		}
-	}
-
-	c.Items = append(c.Items, Item{
-		ServiceID:   serviceID,
-		ServiceName: serviceName,
-		Qty:         qty,
-	})
+func (c *Cart) AddItem(item Item) {
+	c.Items[item] = struct{}{}
 	c.touch()
-	return nil
 }
 
-func (c *Cart) RemoveItem(serviceID string) error {
-	for i := range c.Items {
-		if c.Items[i].ServiceID == serviceID {
-			c.Items = slices.Delete(c.Items, i, i+1)
-			c.touch()
-			return nil
-		}
-	}
-	return ErrItemNotFound
+func (c *Cart) RemoveItem(item Item) {
+	delete(c.Items, item)
+	c.touch()
 }
 
-func (c *Cart) IsEmpty() bool { return len(c.Items) == 0 }
+func (c *Cart) IsEmpty() bool {
+	return len(c.Items) == 0
+}
 
-func (c *Cart) touch() { c.UpdatedAt = time.Now() }
+func (c *Cart) touch() {
+	c.UpdatedAt = time.Now()
+}
