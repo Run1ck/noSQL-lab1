@@ -1,0 +1,16 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries:
+      - "queries/users.sql"
+      - "queries/services.sql"
+      - "queries/requests.sql"
+      - "queries/items.sql"
+      - "queries/bookings.sql"
+    schema: "migrations/init.sql"
+    gen:
+      go:
+        package: "postgres"
+        out: "../internal/storage/postgres"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true

@@ -1,6 +1,5 @@
 CREATE TABLE users (
-    id            UUID PRIMARY KEY,
-    email         TEXT        NOT NULL UNIQUE,
+    login         TEXT        PRIMARY KEY,
     name          TEXT        NOT NULL,
     password_hash TEXT        NOT NULL,
     role          TEXT        NOT NULL CHECK (role IN ('user', 'admin')),
@@ -8,7 +7,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE services (
-    id     TEXT PRIMARY KEY,
+    id     TEXT  PRIMARY KEY ,
     name   TEXT    NOT NULL,
     kind   TEXT    NOT NULL CHECK (kind IN ('room', 'lab', 'equipment')),
     active BOOLEAN NOT NULL DEFAULT TRUE
@@ -16,13 +15,14 @@ CREATE TABLE services (
 
 CREATE TABLE requests (
     id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id      UUID        NOT NULL REFERENCES users (id),
+    user_login   TEXT        NOT NULL REFERENCES users (login),
     status       TEXT        NOT NULL DEFAULT 'new'
                  CHECK (status IN ('new', 'approved', 'rejected', 'cancelled')),
     comment      TEXT        NOT NULL DEFAULT '',
+    response_comment      TEXT        NOT NULL DEFAULT '',
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     processed_at TIMESTAMPTZ,
-    processed_by UUID REFERENCES users (id)
+    processed_by TEXT REFERENCES users (login)
 );
 
 CREATE INDEX requests_status_idx ON requests (status);
