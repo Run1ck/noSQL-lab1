@@ -10,7 +10,7 @@ CREATE TABLE users (
 CREATE TABLE services (
     id     TEXT PRIMARY KEY,
     name   TEXT    NOT NULL,
-    kind   TEXT    NOT NULL CHECK (kind IN ('room', 'lab', 'equipment', 'consultation')),
+    kind   TEXT    NOT NULL CHECK (kind IN ('room', 'lab', 'equipment')),
     active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
