@@ -1,31 +1,36 @@
+CREATE TYPE user_role AS ENUM ('user', 'admin');
+
 CREATE TABLE users (
-    login         TEXT        PRIMARY KEY,
-    name          TEXT        NOT NULL,
+    id            UUID        PRIMARY KEY DEFAULT uuidv7(),
+    login         TEXT        NOT NULL UNIQUE,
     password_hash TEXT        NOT NULL,
-    role          TEXT        NOT NULL CHECK (role IN ('user', 'admin')),
+    role          user_role   NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TYPE service_kind AS ENUM ('room', 'lab', 'equipment');
+
 CREATE TABLE services (
-    id     TEXT  PRIMARY KEY ,
-    name   TEXT    NOT NULL,
-    kind   TEXT    NOT NULL CHECK (kind IN ('room', 'lab', 'equipment')),
-    active BOOLEAN NOT NULL DEFAULT TRUE
+    id     TEXT         PRIMARY KEY,
+    name   TEXT         NOT NULL,
+    kind   service_kind NOT NULL,
+    active BOOLEAN      NOT NULL DEFAULT TRUE
 );
 
+CREATE TYPE request_status AS ENUM ('new', 'approved', 'rejected', 'cancelled');
+
 CREATE TABLE requests (
-    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_login   TEXT        NOT NULL REFERENCES users (login),
-    status       TEXT        NOT NULL DEFAULT 'new'
-                 CHECK (status IN ('new', 'approved', 'rejected', 'cancelled')),
-    comment      TEXT        NOT NULL DEFAULT '',
-    response_comment      TEXT        NOT NULL DEFAULT '',
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    id           BIGINT         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id      UUID           NOT NULL REFERENCES users (id),
+    status       request_status NOT NULL DEFAULT 'new',
+    comment      TEXT           NOT NULL DEFAULT '',
+    created_at   TIMESTAMPTZ    NOT NULL DEFAULT now(),
     processed_at TIMESTAMPTZ,
-    processed_by TEXT REFERENCES users (login)
+    processed_by UUID           REFERENCES users (id)
 );
 
 CREATE INDEX requests_status_idx ON requests (status);
+CREATE INDEX requests_user_id_idx ON requests (user_id);
 
 CREATE TABLE request_items (
     request_id BIGINT NOT NULL REFERENCES requests (id) ON DELETE CASCADE,
@@ -34,11 +39,6 @@ CREATE TABLE request_items (
     PRIMARY KEY (request_id, service_id, date)
 );
 
--- Подтверждённые брони: услуга занята на весь день. День занимает только
--- одобренная заявка — корзина и заявки в статусе new ничего не блокируют,
--- поэтому на один день может быть несколько заявок. Строки вставляются
--- в одной транзакции с переводом заявки в approved; первичный ключ не даст
--- одобрить вторую заявку на тот же день.
 CREATE TABLE bookings (
     service_id TEXT   NOT NULL,
     date       DATE   NOT NULL,
@@ -47,3 +47,5 @@ CREATE TABLE bookings (
     FOREIGN KEY (request_id, service_id, date)
         REFERENCES request_items (request_id, service_id, date) ON DELETE CASCADE
 );
+
+CREATE INDEX bookings_date_idx ON bookings (date);
