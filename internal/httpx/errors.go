@@ -50,6 +50,7 @@ var errorMap = []struct {
 	{service.ErrInvalid, http.StatusBadRequest, "invalid_service"},
 	{service.ErrInvalidKind, http.StatusBadRequest, "invalid_kind"},
 	{service.ErrInvalidDate, http.StatusBadRequest, "invalid_date"},
+	{service.ErrInvalidRange, http.StatusBadRequest, "bad_request"},
 	{service.ErrNotFound, http.StatusNotFound, "service_not_found"},
 
 	{cart.ErrInvalidUUID, http.StatusBadRequest, "invalid_id"},

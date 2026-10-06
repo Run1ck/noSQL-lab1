@@ -6,5 +6,7 @@ var (
 	ErrInvalid     = errors.New("service id and name are required")
 	ErrInvalidKind = errors.New("invalid service kind")
 	ErrInvalidDate = errors.New("invalid date")
-	ErrNotFound    = errors.New("service not found")
+	// ErrInvalidRange — from позже to или диапазон длиннее допустимого.
+	ErrInvalidRange = errors.New("invalid date range")
+	ErrNotFound     = errors.New("service not found")
 )

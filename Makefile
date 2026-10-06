@@ -1,4 +1,4 @@
-.PHONY: up down run test keys flush
+.PHONY: up down run test keys flush generate mockery-install
 
 up:
 	docker compose -f deploy/compose.yaml up -d
@@ -19,3 +19,9 @@ keys:
 
 flush:
 	docker exec booking-redis redis-cli flushall
+
+mockery-install:
+	go install github.com/vektra/mockery/v3@v3.2.5
+
+generate:
+	go generate ./...

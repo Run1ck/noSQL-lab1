@@ -19,12 +19,13 @@
 
 | Задача | Где |
 |---|---|
-| Подключение к Redis | `internal/storage/redisstore/` |
-| `cart.Repository`: SET + TTL | `internal/storage/redisstore/cart.go` |
-| Кэш-декораторы: услуги, брони, инвалидация расписания на Approve | `internal/cache/` |
+| Подключение к Redis | `pkg/redis` |
+| Корзина в Redis: SET + TTL | `internal/adapter/redis/` |
+| Кэш услуг и броней поверх Postgres, инвалидация расписания на Approve | `internal/adapter/repository/` |
 | `ratelimit.Limiter` на Redis (Lua): лимит API и бан | `internal/ratelimit/` |
 | Middleware лимита + `ClientIP` | `internal/httpx/ratelimit_mw.go` |
-| HTTP: каталог, расписание, корзина | `internal/api/catalogapi`, `scheduleapi`, `cartapi` |
+| Use case'ы: каталог, расписание, корзина | `internal/usecase/{get_services,get_schedule,get_cart,add_cart_item,remove_cart_item,clear_cart}.go`, DTO — `internal/dto/` |
+| HTTP: каталог, расписание, корзина | `internal/controller/http/v1/` |
 | Сохранение и восстановление (AOF + RDB), проверка рестартом | `deploy/redis.conf` |
 | Исследование «потеря временных ключей» + выводы о применимости | `research/` |
 | Нагрузочный тестер на C++ | `tools/loadtest/` |
@@ -42,13 +43,15 @@
 | Задача | Где |
 |---|---|
 | Postgres в compose, схема | `deploy/compose.yaml` (сервис `postgres`), `deploy/postgres/init.sql` |
-| Пул и репозитории `user`, `service`, `request`, `booking` | `internal/storage/postgres/` |
+| Пул Postgres | `pkg/postgres` |
+| Методы `usecase.Postgres`: пользователи, услуги, заявки, брони | `internal/adapter/postgres/` |
 | `auth.Tokens` на JWT | `internal/auth/jwt.go` |
 | Middleware `Authenticate`, `RequireAdmin` | `internal/httpx/auth_mw.go` |
-| HTTP: регистрация и вход, заявки пользователя, админка | `internal/api/authapi`, `requestapi`, `adminapi` |
-| Создание админа при старте (`ADMIN_LOGIN` / `ADMIN_PASSWORD`) | `cmd/app` |
+| Use case'ы: регистрация и вход, заявки пользователя, админка | `internal/usecase/`, DTO — `internal/dto/` |
+| HTTP: регистрация и вход, заявки пользователя, админка | `internal/controller/http/v1/` |
+| Создание админа при старте (`ADMIN_LOGIN` / `ADMIN_PASSWORD`) | use case, вызов из `internal/app` |
 | UI: статический HTML + JS через `embed` | `web/` |
-| Сборка приложения | `cmd/app/main.go` |
+| Сборка приложения | `cmd/app/main.go` → `internal/app/app.go` |
 
 Сервис `postgres` в compose: контейнер `booking-postgres`, пользователь, пароль
 и база — `booking`, порт 5432, `init.sql` монтируется в `/docker-entrypoint-initdb.d/`.
@@ -64,7 +67,10 @@
 - `internal/domain/**`
 - `internal/auth/auth.go`
 - `internal/ratelimit/ratelimit.go`
-- `internal/httpx/{module,json,errors}.go`
+- `internal/httpx/{json,errors}.go` (`module.go` больше не используется — маршруты в `router.go`)
+- `internal/usecase/usecase.go` — интерфейсы `Postgres`, `Redis`, `UseCase`, `New`: каждый дописывает свои методы
+- `internal/controller/http/router.go`, `internal/controller/http/v1/v1.go` — каждый дописывает свои маршруты
+- `.mockery.yml`, `internal/usecase/mocks/` (генерируется `make generate`)
 - `internal/config/config.go`, `deploy/.env.example`
 - этот файл
 
@@ -73,70 +79,88 @@
 - `cmd/app/main.go` принадлежит Б. А присылает свои строки сборки в PR, в блок `// Redis`;
 - `deploy/compose.yaml`: А правит сервис `redis`, Б — сервис `postgres`.
 
+## Слои
+
+Стиль — как в эталоне чистой архитектуры (проект `my-app`): правило зависимостей
+направлено внутрь, один use case — один файл.
+
+```
+cmd/app/main.go             config → app.Run
+internal/app                сборка: адаптеры → usecase.New → controller/http.Router
+internal/controller/http    router.go (маршруты) + v1/: Handlers, файл на хендлер
+internal/usecase            usecase.go (интерфейсы Postgres, Redis; UseCase; New) + файл на сценарий
+internal/dto                Input/Output use case'ов; json-теги — формат ответов REST API
+internal/domain             сущности и доменные ошибки (общая зона)
+internal/adapter            redis (А), postgres (Б), repository — кэш Redis поверх postgres (А)
+pkg/redis, pkg/postgres     клиенты
+```
+
+- Use case: `func (u *UseCase) X(ctx, dto.XInput) (dto.XOutput, error)`. Разбор
+  строк (даты, ID) — в use case'е, ошибки — доменные, остальное оборачивается:
+  `fmt.Errorf("u.redis.GetCart: %w", err)`.
+- Хендлер: собрать `dto.XInput` из запроса (JSON — `httpx.DecodeJSON`, путь,
+  query, пользователь — `auth.FromContext`), вызвать use case, ответить
+  `httpx.WriteJSON` или `httpx.WriteError` (статус и код — из `errorMap`).
+- Тесты use case'ов — пакет `usecase_test` и моки mockery (`internal/usecase/mocks`).
+
 ## Точки стыка
 
 | Контракт | Реализует | Использует |
 |---|---|---|
-| `cart.Repository` | А (Redis) | Б: оформление заявки (`Get`, `DeleteCart`) |
-| `service.Repository` | Б (Postgres), А оборачивает кэшем | А: каталог, корзина; Б: админка (`Save`) |
-| `booking.Repository` | Б (Postgres), А оборачивает кэшем | А: расписание, проверка дня при добавлении в корзину |
-| `request.Repository` | Б (Postgres), А оборачивает: после `Approve` чистит кэш расписания | Б |
+| `usecase.Redis`: корзина | А (`adapter/redis`) | use case'ы корзины (А); оформление заявки (Б: `GetCart`, `DeleteCart`) |
+| `usecase.Postgres` | Б (`adapter/postgres`); А оборачивает кэшем (`adapter/repository`) | все use case'ы |
 | `ratelimit.Limiter` | А (Redis) | А: middleware; Б: бан при оформлении заявки |
-| `auth.Tokens`, middleware авторизации | Б | А: `auth.FromContext` в корзине |
-| `httpx.Module`, `httpx.Middlewares` | каждый для своих модулей | `main` |
+| `auth.Tokens`, middleware авторизации | Б | А: `auth.FromContext` в хендлерах корзины |
+| `controller/http.Router`, `httpx.Middlewares` | оба — свои маршруты | `app` |
 
-Декораторы А реализуют тот же интерфейс, что и репозиторий Б, поэтому Б пишет
-код против интерфейса и не знает, есть ли кэш. При `CACHE_ENABLED=false` main
-подставляет репозитории Postgres напрямую — это нужно для замеров.
+Методы `usecase.Postgres`, которые нужны А (реализует Б):
 
-Пока чужая часть не готова, пишите против in-memory фейка интерфейса в своих
-тестах. Вместо `Middlewares.Auth` А может подставить заглушку, которая кладёт
-фиксированный `Principal` через `auth.WithPrincipal`.
+```go
+GetServices(ctx) ([]*service.Service, error)          // все, включая неактивные
+GetService(ctx, id string) (*service.Service, error)  // нет — service.ErrNotFound
+GetBookings(ctx, date service.Date) ([]booking.Booking, error)
+```
+
+`adapter/repository` реализует тот же `usecase.Postgres`: читает из Redis-кэша и
+ходит в Postgres Б на промахе, поэтому use case'ы не знают, есть ли кэш. При
+`CACHE_ENABLED=false` `app` передаёт `adapter/postgres` напрямую — это нужно для
+замеров.
+
+Пока чужая часть не готова, use case'ы тестируются на моках интерфейсов, а
+хендлеры — с заглушкой, которая кладёт фиксированный `Principal` через
+`auth.WithPrincipal`.
 
 ## Сборка в main
 
-Имена конструкторов — договорённость, по ним Б собирает приложение:
+Имена конструкторов — договорённость, по ним Б собирает приложение в `internal/app`:
 
 ```go
 // Redis (А)
-rdb, err := redisstore.New(ctx, cfg.RedisAddr) // *redis.Client
-carts := redisstore.NewCarts(rdb, cfg.CartTTL) // cart.Repository
-apiLimit := ratelimit.NewRedis(rdb, "rl:api", cfg.RateLimit, cfg.RateWindow)
-banLimit := ratelimit.NewBan(rdb, cfg.BanLimit, cfg.BanWindow, cfg.BanTTL)
+client, err := redis.New(ctx, cfg.RedisAddr) // pkg/redis, *redis.Client
+apiLimit := ratelimit.NewRedis(client, "rl:api", cfg.RateLimit, cfg.RateWindow)
+banLimit := ratelimit.NewBan(client, cfg.BanLimit, cfg.BanWindow, cfg.BanTTL)
 
 // Postgres (Б)
-pool, err := postgres.New(ctx, cfg.PostgresDSN) // *pgxpool.Pool
-var (
-	users    user.Repository    = postgres.NewUsers(pool)
-	services service.Repository = postgres.NewServices(pool)
-	requests request.Repository = postgres.NewRequests(pool)
-	bookings booking.Repository = postgres.NewBookings(pool)
-)
+pool, err := postgres.New(ctx, cfg.PostgresDSN) // pkg/postgres
+var pg usecase.Postgres = adapterpostgres.New(pool)
 tokens := auth.NewJWT(cfg.JWTSecret, cfg.JWTTTL) // auth.Tokens
 
-// Кэш (А) поверх репозиториев Б
+// Кэш (А) поверх Postgres Б
 if cfg.CacheEnabled {
-	services = cache.NewServices(services, rdb, cfg.CacheTTL)
-	bookings = cache.NewBookings(bookings, rdb, cfg.CacheTTL)
-	requests = cache.NewRequests(requests, rdb) // Approve → DEL cache:schedule:{date}
+	pg = repository.New(client, pg, cfg.CacheTTL) // Approve → DEL cache:schedule:{date}
 }
 
+// UseCase
+uc := usecase.New(pg, adapterredis.New(client, cfg.CartTTL) /* Б: tokens, banLimit */)
+
+// HTTP
 authn := httpx.Authenticate(tokens)
 mw := httpx.Middlewares{
 	Auth:  authn,
 	Admin: func(h http.Handler) http.Handler { return authn(httpx.RequireAdmin(h)) },
 }
 mux := http.NewServeMux()
-for _, m := range []httpx.Module{
-	catalogapi.New(services),                  // А
-	scheduleapi.New(bookings),                 // А
-	cartapi.New(carts, services, bookings),    // А
-	authapi.New(users, tokens),                // Б
-	requestapi.New(requests, carts, banLimit), // Б
-	adminapi.New(requests, services),          // Б
-} {
-	m.Register(mux, mw)
-}
+controllerhttp.Router(mux, uc, mw)
 mux.Handle("/", web.Handler()) // Б
 
 // Лимит только на /api/*, статику UI не считаем.
@@ -237,7 +261,7 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 | Ключ | Тип | TTL | Что хранит |
 |---|---|---|---|
 | `cart:{userID}` | SET из `serviceID\|YYYY-MM-DD` | `CART_TTL`, продлевается при каждом изменении | корзина |
-| `cache:services` | STRING, JSON | `CACHE_TTL` | все услуги; DEL при `service.Repository.Save` |
+| `cache:services` | STRING, JSON | `CACHE_TTL` | все услуги; DEL при сохранении услуги |
 | `cache:schedule:{YYYY-MM-DD}` | STRING, JSON | `CACHE_TTL` | брони дня; DEL при `Approve` заявки с этим днём |
 | `rl:api:{ip}` | счётчик | `RATE_WINDOW` | лимит API |
 | `rl:req:{userID}` | счётчик | `BAN_WINDOW` | заявки пользователя за окно |
@@ -254,22 +278,24 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 
 ## Бизнес-правила
 
-- **Добавить в корзину** (А) можно только существующую услугу (`service_not_found`),
+- **Добавить в корзину** (А, `usecase.AddCartItem`) можно только существующую услугу (`service_not_found`),
   если она активна (`service_unavailable`), на день не раньше сегодняшнего
   (`past_date`), не занятый одобренной бронью (`slot_booked`). Повторное
   добавление той же пары — не ошибка.
+- **Расписание** (А, `usecase.GetSchedule`): `from > to` или больше 31 дня —
+  `service.ErrInvalidRange` → 400 `bad_request`.
 - Корзина и заявки в статусе `new` день не занимают. Занимает только одобрение
   (см. комментарий в `init.sql`).
 - **Оформление** (Б), по шагам:
-  1. `carts.Get`; если корзина пуста — `empty_cart`.
+  1. `u.redis.GetCart`; если корзина пуста — `empty_cart`.
   2. `banLimit.Allow(ctx, userID.String())`; при отказе вернуть
      `&ratelimit.LimitedError{Banned: true, RetryAfter: d.RetryAfter}`.
   3. `request.NewFromCart` → `requests.Create`.
-  4. `carts.DeleteCart`. Ошибку здесь только пишем в лог — корзина всё равно истечёт по TTL.
+  4. `u.redis.DeleteCart`. Ошибку здесь только пишем в лог — корзина всё равно истечёт по TTL.
 
   Если `Allow` вернул ошибку (Redis недоступен), пишем в лог и пропускаем.
-- **Одобрение и отклонение** (Б): `requests.Get` → `r.Approve(adminID, comment)`
-  → `requests.Approve`. Гонку двух админов отсекает БД (`already_processed`,
+- **Одобрение и отклонение** (Б): `u.postgres` — получить заявку с позициями →
+  `r.Approve(adminID, comment)` → сохранить. Гонку двух админов отсекает БД (`already_processed`,
   `slot_booked`). Кэш расписания чистит декоратор А, Б ничего не вызывает.
 - **Отмена**: только владелец и только из `new`.
 - **Лимит API**: ключ — IP клиента, все `/api/*`. При недоступности Redis
@@ -279,10 +305,11 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 
 1. Контракты (этот файл и код из «общей зоны») — готово.
 2. Параллельно, без зависимостей друг от друга:
-   - А: клиент Redis, `cart.Repository`, `Limiter` и бан, middleware лимита;
-     каталог и корзина на фейках `service`/`booking.Repository`.
-   - Б: Postgres в compose, репозитории, JWT, `authapi`; оформление заявки
-     на фейках `cart.Repository` и `Limiter`.
-3. Б собирает `main.go`. Первый общий запуск — точка синхронизации.
-4. Б делает UI; А — кэш-декораторы, нагрузочный тест, исследование, выводы.
+   - А: клиент Redis, корзина (`adapter/redis`), `Limiter` и бан, middleware
+     лимита; use case'ы и хендлеры каталога, расписания и корзины на моках
+     `usecase.Postgres` — сделано.
+   - Б: Postgres в compose, `adapter/postgres`, JWT, авторизация; оформление
+     заявки на моках `usecase.Redis` и `Limiter`.
+3. Б собирает `internal/app`. Первый общий запуск — точка синхронизации.
+4. Б делает UI; А — кэш (`adapter/repository`), нагрузочный тест, исследование, выводы.
 5. Перед отчётом — общий прогон нагрузочного теста по живому приложению.
