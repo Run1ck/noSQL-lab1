@@ -22,7 +22,6 @@ type Request struct {
 	Comment     string
 	CreatedAt   time.Time
 	ProcessedAt *time.Time
-	// ProcessedBy — админ, обработавший заявку, или сам заявитель при отмене.
 	ProcessedBy *uuid.UUID
 }
 
