@@ -1,17 +1,9 @@
--- name: CheckServiceAvailability :one
-SELECT 1 FROM bookings WHERE service_id = $1 AND date = $2;
+-- name: IsServiceBooked :one
+SELECT EXISTS (SELECT 1 FROM bookings WHERE service_id = $1 AND date = $2);
 
--- name: ApproveBooking :execresult
-INSERT INTO bookings (service_id, date, request_id) VALUES ($2, $3, $1) ON CONFLICT DO NOTHING;
+-- name: GetBookingsByDate :many
+SELECT * FROM bookings WHERE date = $1 ORDER BY service_id;
 
--- name: CancelBooking :execresult
-DELETE FROM bookings WHERE request_id = $1;
-
--- CREATE TABLE bookings (
---     service_id TEXT   NOT NULL,
---     date       DATE   NOT NULL,
---     request_id BIGINT NOT NULL,
---     PRIMARY KEY (service_id, date),
---     FOREIGN KEY (request_id, service_id, date)
---         REFERENCES request_items (request_id, service_id, date) ON DELETE CASCADE
--- );
+-- name: CreateBookingsForRequest :exec
+INSERT INTO bookings (service_id, date, request_id)
+SELECT service_id, date, request_id FROM request_items WHERE request_items.request_id = $1;

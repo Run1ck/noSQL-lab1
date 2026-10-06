@@ -3,7 +3,7 @@
 //   sqlc v1.31.1
 // source: services.sql
 
-package postgres
+package sqlc
 
 import (
 	"context"
@@ -18,7 +18,7 @@ INSERT INTO services (id, name, kind, active) VALUES ($1, $2, $3, $4)
 type CreateServiceParams struct {
 	ID     string
 	Name   string
-	Kind   string
+	Kind   ServiceKind
 	Active bool
 }
 
@@ -32,7 +32,7 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (p
 }
 
 const getAllServices = `-- name: GetAllServices :many
-SELECT id, name, kind, active FROM services
+SELECT id, name, kind, active FROM services ORDER BY id
 `
 
 func (q *Queries) GetAllServices(ctx context.Context) ([]Service, error) {
@@ -60,11 +60,27 @@ func (q *Queries) GetAllServices(ctx context.Context) ([]Service, error) {
 	return items, nil
 }
 
-const getServicesByKind = `-- name: GetServicesByKind :many
-SELECT id, name, kind, active FROM services WHERE kind = $1
+const getService = `-- name: GetService :one
+SELECT id, name, kind, active FROM services WHERE id = $1
 `
 
-func (q *Queries) GetServicesByKind(ctx context.Context, kind string) ([]Service, error) {
+func (q *Queries) GetService(ctx context.Context, id string) (Service, error) {
+	row := q.db.QueryRow(ctx, getService, id)
+	var i Service
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Kind,
+		&i.Active,
+	)
+	return i, err
+}
+
+const getServicesByKind = `-- name: GetServicesByKind :many
+SELECT id, name, kind, active FROM services WHERE kind = $1 ORDER BY id
+`
+
+func (q *Queries) GetServicesByKind(ctx context.Context, kind ServiceKind) ([]Service, error) {
 	rows, err := q.db.Query(ctx, getServicesByKind, kind)
 	if err != nil {
 		return nil, err
@@ -90,11 +106,12 @@ func (q *Queries) GetServicesByKind(ctx context.Context, kind string) ([]Service
 }
 
 const searchForService = `-- name: SearchForService :many
-SELECT id, name, kind, active FROM services WHERE name LIKE $1
+SELECT id, name, kind, active FROM services WHERE name ILIKE '%' || $1::text || '%' ORDER BY id
 `
 
-func (q *Queries) SearchForService(ctx context.Context, name string) ([]Service, error) {
-	rows, err := q.db.Query(ctx, searchForService, name)
+// Подстрока без учёта регистра; % и _ в запросе считаются шаблоном LIKE.
+func (q *Queries) SearchForService(ctx context.Context, query string) ([]Service, error) {
+	rows, err := q.db.Query(ctx, searchForService, query)
 	if err != nil {
 		return nil, err
 	}
@@ -129,4 +146,27 @@ type SetServiceStatusParams struct {
 
 func (q *Queries) SetServiceStatus(ctx context.Context, arg SetServiceStatusParams) (pgconn.CommandTag, error) {
 	return q.db.Exec(ctx, setServiceStatus, arg.ID, arg.Active)
+}
+
+const upsertService = `-- name: UpsertService :exec
+INSERT INTO services (id, name, kind, active) VALUES ($1, $2, $3, $4)
+ON CONFLICT (id) DO UPDATE
+SET name = EXCLUDED.name, kind = EXCLUDED.kind, active = EXCLUDED.active
+`
+
+type UpsertServiceParams struct {
+	ID     string
+	Name   string
+	Kind   ServiceKind
+	Active bool
+}
+
+func (q *Queries) UpsertService(ctx context.Context, arg UpsertServiceParams) error {
+	_, err := q.db.Exec(ctx, upsertService,
+		arg.ID,
+		arg.Name,
+		arg.Kind,
+		arg.Active,
+	)
+	return err
 }

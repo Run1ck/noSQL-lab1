@@ -3,18 +3,17 @@
 //   sqlc v1.31.1
 // source: items.sql
 
-package postgres
+package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 type AddItemsToRequestParams struct {
 	RequestID int64
 	ServiceID string
-	Date      pgtype.Date
+	Date      time.Time
 }
 
 const getRequestInfo = `-- name: GetRequestInfo :many
@@ -23,8 +22,8 @@ SELECT services.name, services.kind, date FROM request_items INNER JOIN services
 
 type GetRequestInfoRow struct {
 	Name string
-	Kind string
-	Date pgtype.Date
+	Kind ServiceKind
+	Date time.Time
 }
 
 func (q *Queries) GetRequestInfo(ctx context.Context, requestID int64) ([]GetRequestInfoRow, error) {
@@ -37,6 +36,32 @@ func (q *Queries) GetRequestInfo(ctx context.Context, requestID int64) ([]GetReq
 	for rows.Next() {
 		var i GetRequestInfoRow
 		if err := rows.Scan(&i.Name, &i.Kind, &i.Date); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRequestItems = `-- name: GetRequestItems :many
+SELECT request_id, service_id, date FROM request_items
+WHERE request_id = ANY($1::bigint[])
+ORDER BY request_id, date, service_id
+`
+
+func (q *Queries) GetRequestItems(ctx context.Context, requestIds []int64) ([]RequestItem, error) {
+	rows, err := q.db.Query(ctx, getRequestItems, requestIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RequestItem
+	for rows.Next() {
+		var i RequestItem
+		if err := rows.Scan(&i.RequestID, &i.ServiceID, &i.Date); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

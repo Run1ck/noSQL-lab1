@@ -1,14 +1,19 @@
+-- name: CreateRequest :one
+INSERT INTO requests (user_id) VALUES ($1) RETURNING id, created_at;
+
+-- name: GetRequest :one
+SELECT * FROM requests WHERE id = $1;
+
 -- name: GetAllRequests :many
-SELECT * FROM requests;
+SELECT * FROM requests ORDER BY created_at DESC, id DESC;
 
 -- name: GetRequestsByStatus :many
-SELECT * FROM requests WHERE status = $1;
+SELECT * FROM requests WHERE status = $1 ORDER BY created_at DESC, id DESC;
 
--- name: CreateRequest :one
-INSERT INTO requests (user_login) VALUES ($1) RETURNING id;
-
--- name: CancelRequest :execresult
-UPDATE requests SET status = 'cancelled' WHERE id = $1 AND user_login = $2;
+-- name: GetRequestsByUser :many
+SELECT * FROM requests WHERE user_id = $1 ORDER BY created_at DESC, id DESC;
 
 -- name: ProcessRequest :execresult
-UPDATE requests SET status = $2, response_comment = $3, processed_at = NOW(), processed_by = $4 WHERE id = $1;
+UPDATE requests
+SET status = $2, comment = $3, processed_at = $4, processed_by = $5
+WHERE id = $1 AND status = 'new';
