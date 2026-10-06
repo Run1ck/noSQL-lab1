@@ -8,7 +8,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// bcrypt учитывает только первые 72 байта пароля, поэтому длиннее не принимаем.
 const (
 	minPasswordLen = 8
 	maxPasswordLen = 72
