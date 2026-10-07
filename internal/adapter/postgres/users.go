@@ -32,7 +32,6 @@ func (r *UserRepo) Create(ctx context.Context, u *user.User) error {
 	if err != nil {
 		return err
 	}
-	// ON CONFLICT (login) DO NOTHING: 0 строк — логин занят.
 	if tag.RowsAffected() == 0 {
 		return user.ErrLoginTaken
 	}
