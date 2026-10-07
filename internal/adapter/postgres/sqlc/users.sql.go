@@ -27,7 +27,6 @@ type CreateUserParams struct {
 	CreatedAt    time.Time
 }
 
-// 0 затронутых строк — логин занят (ErrLoginTaken).
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (pgconn.CommandTag, error) {
 	return q.db.Exec(ctx, createUser,
 		arg.ID,

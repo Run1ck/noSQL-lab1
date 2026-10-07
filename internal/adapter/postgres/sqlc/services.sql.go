@@ -109,7 +109,6 @@ const searchForService = `-- name: SearchForService :many
 SELECT id, name, kind, active FROM services WHERE name ILIKE '%' || $1::text || '%' ORDER BY id
 `
 
-// Подстрока без учёта регистра; % и _ в запросе считаются шаблоном LIKE.
 func (q *Queries) SearchForService(ctx context.Context, query string) ([]Service, error) {
 	rows, err := q.db.Query(ctx, searchForService, query)
 	if err != nil {
