@@ -47,7 +47,6 @@ func (r *RequestRepo) Create(ctx context.Context, req *request.Request) error {
 		})
 	}
 	if _, err := qtx.AddItemsToRequest(ctx, params); err != nil {
-		// Внешний ключ request_items → services: такой услуги нет.
 		if isPgCode(err, pgForeignKeyViolation) {
 			return service.ErrNotFound
 		}
@@ -107,7 +106,6 @@ func (r *RequestRepo) Approve(ctx context.Context, req *request.Request) error {
 		return err
 	}
 	if err := qtx.CreateBookingsForRequest(ctx, req.ID); err != nil {
-		// Первичный ключ bookings: день уже занят другой одобренной заявкой.
 		if isPgCode(err, pgUniqueViolation) {
 			return request.ErrSlotBooked
 		}
@@ -124,8 +122,6 @@ func (r *RequestRepo) Cancel(ctx context.Context, req *request.Request) error {
 	return process(ctx, r.q, req)
 }
 
-// process сохраняет результат доменного Approve, Reject или Cancel. q —
-// либо запросы пула, либо привязанные к транзакции.
 func process(ctx context.Context, q *sqlc.Queries, req *request.Request) error {
 	tag, err := q.ProcessRequest(ctx, sqlc.ProcessRequestParams{
 		ID:          req.ID,
@@ -137,14 +133,12 @@ func process(ctx context.Context, q *sqlc.Queries, req *request.Request) error {
 	if err != nil {
 		return err
 	}
-	// UPDATE ... WHERE status = 'new': 0 строк — заявку уже обработали.
 	if tag.RowsAffected() == 0 {
 		return request.ErrAlreadyProcessed
 	}
 	return nil
 }
 
-// withItems догружает позиции всех заявок одним запросом.
 func (r *RequestRepo) withItems(ctx context.Context, rows []sqlc.Request) ([]*request.Request, error) {
 	if len(rows) == 0 {
 		return []*request.Request{}, nil

@@ -29,7 +29,7 @@ func Test_GetServices_Success(t *testing.T) {
 	defer postgres.AssertCalled(t, "GetServices", Any)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, nil)
+	u := usecase.New(postgres, nil, nil, nil)
 
 	{ // Сам тест: только активные
 		output := dto.GetServicesOutput{Services: []dto.Service{
@@ -48,7 +48,7 @@ func Test_GetServices_Empty(t *testing.T) {
 	postgres.On("GetServices", Any).Return([]*service.Service{}, nil)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, nil)
+	u := usecase.New(postgres, nil, nil, nil)
 
 	{ // Сам тест: пустой срез, а не nil — в JSON будет [], а не null
 		actual, err := u.GetServices(context.Background())
@@ -66,7 +66,7 @@ func Test_GetServices_Error(t *testing.T) {
 	postgres.On("GetServices", Any).Return(nil, errDB)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, nil)
+	u := usecase.New(postgres, nil, nil, nil)
 
 	{ // Сам тест
 		_, err := u.GetServices(context.Background())

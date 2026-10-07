@@ -46,7 +46,7 @@ func Test_AddCartItem_Success(t *testing.T) {
 	defer redis.AssertCalled(t, "SaveCart", Any, Any)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, redis)
+	u := usecase.New(postgres, redis, nil, nil)
 
 	{ // Сам тест
 		input := dto.AddCartItemInput{UserID: userID, ServiceID: "room-101", Date: today.String()}
@@ -117,7 +117,7 @@ func Test_AddCartItem_Rejected(t *testing.T) {
 		postgres.On("GetBookings", Any, Any).Return(tc.booked, nil)
 
 		// Собираем UseCase: Redis без ожиданий — корзину трогать нельзя
-		u := usecase.New(postgres, new(mocks.Redis))
+		u := usecase.New(postgres, new(mocks.Redis), nil, nil)
 
 		{ // Сам тест
 			actual, err := u.AddCartItem(context.Background(), tc.input)

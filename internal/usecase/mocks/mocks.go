@@ -7,7 +7,9 @@ package mocks
 import (
 	"booking/internal/domain/booking"
 	"booking/internal/domain/cart"
+	"booking/internal/domain/request"
 	"booking/internal/domain/service"
+	"booking/internal/domain/user"
 	"context"
 	"time"
 
@@ -320,6 +322,190 @@ func (_m *Postgres) EXPECT() *Postgres_Expecter {
 	return &Postgres_Expecter{mock: &_m.Mock}
 }
 
+// Approve provides a mock function for the type Postgres
+func (_mock *Postgres) Approve(ctx context.Context, req *request.Request) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Approve")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *request.Request) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Postgres_Approve_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Approve'
+type Postgres_Approve_Call struct {
+	*mock.Call
+}
+
+// Approve is a helper method to define mock.On call
+//   - ctx
+//   - req
+func (_e *Postgres_Expecter) Approve(ctx interface{}, req interface{}) *Postgres_Approve_Call {
+	return &Postgres_Approve_Call{Call: _e.mock.On("Approve", ctx, req)}
+}
+
+func (_c *Postgres_Approve_Call) Run(run func(ctx context.Context, req *request.Request)) *Postgres_Approve_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*request.Request))
+	})
+	return _c
+}
+
+func (_c *Postgres_Approve_Call) Return(err error) *Postgres_Approve_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Postgres_Approve_Call) RunAndReturn(run func(ctx context.Context, req *request.Request) error) *Postgres_Approve_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Cancel provides a mock function for the type Postgres
+func (_mock *Postgres) Cancel(ctx context.Context, req *request.Request) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Cancel")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *request.Request) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Postgres_Cancel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Cancel'
+type Postgres_Cancel_Call struct {
+	*mock.Call
+}
+
+// Cancel is a helper method to define mock.On call
+//   - ctx
+//   - req
+func (_e *Postgres_Expecter) Cancel(ctx interface{}, req interface{}) *Postgres_Cancel_Call {
+	return &Postgres_Cancel_Call{Call: _e.mock.On("Cancel", ctx, req)}
+}
+
+func (_c *Postgres_Cancel_Call) Run(run func(ctx context.Context, req *request.Request)) *Postgres_Cancel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*request.Request))
+	})
+	return _c
+}
+
+func (_c *Postgres_Cancel_Call) Return(err error) *Postgres_Cancel_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Postgres_Cancel_Call) RunAndReturn(run func(ctx context.Context, req *request.Request) error) *Postgres_Cancel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateRequest provides a mock function for the type Postgres
+func (_mock *Postgres) CreateRequest(ctx context.Context, req *request.Request) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateRequest")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *request.Request) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Postgres_CreateRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateRequest'
+type Postgres_CreateRequest_Call struct {
+	*mock.Call
+}
+
+// CreateRequest is a helper method to define mock.On call
+//   - ctx
+//   - req
+func (_e *Postgres_Expecter) CreateRequest(ctx interface{}, req interface{}) *Postgres_CreateRequest_Call {
+	return &Postgres_CreateRequest_Call{Call: _e.mock.On("CreateRequest", ctx, req)}
+}
+
+func (_c *Postgres_CreateRequest_Call) Run(run func(ctx context.Context, req *request.Request)) *Postgres_CreateRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*request.Request))
+	})
+	return _c
+}
+
+func (_c *Postgres_CreateRequest_Call) Return(err error) *Postgres_CreateRequest_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Postgres_CreateRequest_Call) RunAndReturn(run func(ctx context.Context, req *request.Request) error) *Postgres_CreateRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateUser provides a mock function for the type Postgres
+func (_mock *Postgres) CreateUser(ctx context.Context, u *user.User) error {
+	ret := _mock.Called(ctx, u)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateUser")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *user.User) error); ok {
+		r0 = returnFunc(ctx, u)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Postgres_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
+type Postgres_CreateUser_Call struct {
+	*mock.Call
+}
+
+// CreateUser is a helper method to define mock.On call
+//   - ctx
+//   - u
+func (_e *Postgres_Expecter) CreateUser(ctx interface{}, u interface{}) *Postgres_CreateUser_Call {
+	return &Postgres_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, u)}
+}
+
+func (_c *Postgres_CreateUser_Call) Run(run func(ctx context.Context, u *user.User)) *Postgres_CreateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*user.User))
+	})
+	return _c
+}
+
+func (_c *Postgres_CreateUser_Call) Return(err error) *Postgres_CreateUser_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Postgres_CreateUser_Call) RunAndReturn(run func(ctx context.Context, u *user.User) error) *Postgres_CreateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetBookings provides a mock function for the type Postgres
 func (_mock *Postgres) GetBookings(ctx context.Context, date service.Date) ([]booking.Booking, error) {
 	ret := _mock.Called(ctx, date)
@@ -373,6 +559,233 @@ func (_c *Postgres_GetBookings_Call) Return(bookings []booking.Booking, err erro
 }
 
 func (_c *Postgres_GetBookings_Call) RunAndReturn(run func(ctx context.Context, date service.Date) ([]booking.Booking, error)) *Postgres_GetBookings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRequest provides a mock function for the type Postgres
+func (_mock *Postgres) GetRequest(ctx context.Context, id int64) (*request.Request, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRequest")
+	}
+
+	var r0 *request.Request
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (*request.Request, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) *request.Request); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*request.Request)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Postgres_GetRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRequest'
+type Postgres_GetRequest_Call struct {
+	*mock.Call
+}
+
+// GetRequest is a helper method to define mock.On call
+//   - ctx
+//   - id
+func (_e *Postgres_Expecter) GetRequest(ctx interface{}, id interface{}) *Postgres_GetRequest_Call {
+	return &Postgres_GetRequest_Call{Call: _e.mock.On("GetRequest", ctx, id)}
+}
+
+func (_c *Postgres_GetRequest_Call) Run(run func(ctx context.Context, id int64)) *Postgres_GetRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64))
+	})
+	return _c
+}
+
+func (_c *Postgres_GetRequest_Call) Return(request1 *request.Request, err error) *Postgres_GetRequest_Call {
+	_c.Call.Return(request1, err)
+	return _c
+}
+
+func (_c *Postgres_GetRequest_Call) RunAndReturn(run func(ctx context.Context, id int64) (*request.Request, error)) *Postgres_GetRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRequests provides a mock function for the type Postgres
+func (_mock *Postgres) GetRequests(ctx context.Context) ([]*request.Request, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRequests")
+	}
+
+	var r0 []*request.Request
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*request.Request, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*request.Request); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*request.Request)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Postgres_GetRequests_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRequests'
+type Postgres_GetRequests_Call struct {
+	*mock.Call
+}
+
+// GetRequests is a helper method to define mock.On call
+//   - ctx
+func (_e *Postgres_Expecter) GetRequests(ctx interface{}) *Postgres_GetRequests_Call {
+	return &Postgres_GetRequests_Call{Call: _e.mock.On("GetRequests", ctx)}
+}
+
+func (_c *Postgres_GetRequests_Call) Run(run func(ctx context.Context)) *Postgres_GetRequests_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Postgres_GetRequests_Call) Return(requests []*request.Request, err error) *Postgres_GetRequests_Call {
+	_c.Call.Return(requests, err)
+	return _c
+}
+
+func (_c *Postgres_GetRequests_Call) RunAndReturn(run func(ctx context.Context) ([]*request.Request, error)) *Postgres_GetRequests_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRequestsByStatus provides a mock function for the type Postgres
+func (_mock *Postgres) GetRequestsByStatus(ctx context.Context, s request.Status) ([]*request.Request, error) {
+	ret := _mock.Called(ctx, s)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRequestsByStatus")
+	}
+
+	var r0 []*request.Request
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, request.Status) ([]*request.Request, error)); ok {
+		return returnFunc(ctx, s)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, request.Status) []*request.Request); ok {
+		r0 = returnFunc(ctx, s)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*request.Request)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, request.Status) error); ok {
+		r1 = returnFunc(ctx, s)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Postgres_GetRequestsByStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRequestsByStatus'
+type Postgres_GetRequestsByStatus_Call struct {
+	*mock.Call
+}
+
+// GetRequestsByStatus is a helper method to define mock.On call
+//   - ctx
+//   - s
+func (_e *Postgres_Expecter) GetRequestsByStatus(ctx interface{}, s interface{}) *Postgres_GetRequestsByStatus_Call {
+	return &Postgres_GetRequestsByStatus_Call{Call: _e.mock.On("GetRequestsByStatus", ctx, s)}
+}
+
+func (_c *Postgres_GetRequestsByStatus_Call) Run(run func(ctx context.Context, s request.Status)) *Postgres_GetRequestsByStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(request.Status))
+	})
+	return _c
+}
+
+func (_c *Postgres_GetRequestsByStatus_Call) Return(requests []*request.Request, err error) *Postgres_GetRequestsByStatus_Call {
+	_c.Call.Return(requests, err)
+	return _c
+}
+
+func (_c *Postgres_GetRequestsByStatus_Call) RunAndReturn(run func(ctx context.Context, s request.Status) ([]*request.Request, error)) *Postgres_GetRequestsByStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRequestsByUser provides a mock function for the type Postgres
+func (_mock *Postgres) GetRequestsByUser(ctx context.Context, userID uuid.UUID) ([]*request.Request, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRequestsByUser")
+	}
+
+	var r0 []*request.Request
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*request.Request, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*request.Request); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*request.Request)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Postgres_GetRequestsByUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRequestsByUser'
+type Postgres_GetRequestsByUser_Call struct {
+	*mock.Call
+}
+
+// GetRequestsByUser is a helper method to define mock.On call
+//   - ctx
+//   - userID
+func (_e *Postgres_Expecter) GetRequestsByUser(ctx interface{}, userID interface{}) *Postgres_GetRequestsByUser_Call {
+	return &Postgres_GetRequestsByUser_Call{Call: _e.mock.On("GetRequestsByUser", ctx, userID)}
+}
+
+func (_c *Postgres_GetRequestsByUser_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *Postgres_GetRequestsByUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *Postgres_GetRequestsByUser_Call) Return(requests []*request.Request, err error) *Postgres_GetRequestsByUser_Call {
+	_c.Call.Return(requests, err)
+	return _c
+}
+
+func (_c *Postgres_GetRequestsByUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]*request.Request, error)) *Postgres_GetRequestsByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -486,6 +899,212 @@ func (_c *Postgres_GetServices_Call) Return(services []*service.Service, err err
 }
 
 func (_c *Postgres_GetServices_Call) RunAndReturn(run func(ctx context.Context) ([]*service.Service, error)) *Postgres_GetServices_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserByID provides a mock function for the type Postgres
+func (_mock *Postgres) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByID")
+	}
+
+	var r0 *user.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*user.User, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *user.User); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*user.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Postgres_GetUserByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByID'
+type Postgres_GetUserByID_Call struct {
+	*mock.Call
+}
+
+// GetUserByID is a helper method to define mock.On call
+//   - ctx
+//   - id
+func (_e *Postgres_Expecter) GetUserByID(ctx interface{}, id interface{}) *Postgres_GetUserByID_Call {
+	return &Postgres_GetUserByID_Call{Call: _e.mock.On("GetUserByID", ctx, id)}
+}
+
+func (_c *Postgres_GetUserByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *Postgres_GetUserByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *Postgres_GetUserByID_Call) Return(user1 *user.User, err error) *Postgres_GetUserByID_Call {
+	_c.Call.Return(user1, err)
+	return _c
+}
+
+func (_c *Postgres_GetUserByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*user.User, error)) *Postgres_GetUserByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserByLogin provides a mock function for the type Postgres
+func (_mock *Postgres) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
+	ret := _mock.Called(ctx, login)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByLogin")
+	}
+
+	var r0 *user.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*user.User, error)); ok {
+		return returnFunc(ctx, login)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *user.User); ok {
+		r0 = returnFunc(ctx, login)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*user.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, login)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Postgres_GetUserByLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByLogin'
+type Postgres_GetUserByLogin_Call struct {
+	*mock.Call
+}
+
+// GetUserByLogin is a helper method to define mock.On call
+//   - ctx
+//   - login
+func (_e *Postgres_Expecter) GetUserByLogin(ctx interface{}, login interface{}) *Postgres_GetUserByLogin_Call {
+	return &Postgres_GetUserByLogin_Call{Call: _e.mock.On("GetUserByLogin", ctx, login)}
+}
+
+func (_c *Postgres_GetUserByLogin_Call) Run(run func(ctx context.Context, login string)) *Postgres_GetUserByLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Postgres_GetUserByLogin_Call) Return(user1 *user.User, err error) *Postgres_GetUserByLogin_Call {
+	_c.Call.Return(user1, err)
+	return _c
+}
+
+func (_c *Postgres_GetUserByLogin_Call) RunAndReturn(run func(ctx context.Context, login string) (*user.User, error)) *Postgres_GetUserByLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Reject provides a mock function for the type Postgres
+func (_mock *Postgres) Reject(ctx context.Context, req *request.Request) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Reject")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *request.Request) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Postgres_Reject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reject'
+type Postgres_Reject_Call struct {
+	*mock.Call
+}
+
+// Reject is a helper method to define mock.On call
+//   - ctx
+//   - req
+func (_e *Postgres_Expecter) Reject(ctx interface{}, req interface{}) *Postgres_Reject_Call {
+	return &Postgres_Reject_Call{Call: _e.mock.On("Reject", ctx, req)}
+}
+
+func (_c *Postgres_Reject_Call) Run(run func(ctx context.Context, req *request.Request)) *Postgres_Reject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*request.Request))
+	})
+	return _c
+}
+
+func (_c *Postgres_Reject_Call) Return(err error) *Postgres_Reject_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Postgres_Reject_Call) RunAndReturn(run func(ctx context.Context, req *request.Request) error) *Postgres_Reject_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveService provides a mock function for the type Postgres
+func (_mock *Postgres) SaveService(ctx context.Context, s *service.Service) error {
+	ret := _mock.Called(ctx, s)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveService")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *service.Service) error); ok {
+		r0 = returnFunc(ctx, s)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Postgres_SaveService_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveService'
+type Postgres_SaveService_Call struct {
+	*mock.Call
+}
+
+// SaveService is a helper method to define mock.On call
+//   - ctx
+//   - s
+func (_e *Postgres_Expecter) SaveService(ctx interface{}, s interface{}) *Postgres_SaveService_Call {
+	return &Postgres_SaveService_Call{Call: _e.mock.On("SaveService", ctx, s)}
+}
+
+func (_c *Postgres_SaveService_Call) Run(run func(ctx context.Context, s *service.Service)) *Postgres_SaveService_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*service.Service))
+	})
+	return _c
+}
+
+func (_c *Postgres_SaveService_Call) Return(err error) *Postgres_SaveService_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Postgres_SaveService_Call) RunAndReturn(run func(ctx context.Context, s *service.Service) error) *Postgres_SaveService_Call {
 	_c.Call.Return(run)
 	return _c
 }
