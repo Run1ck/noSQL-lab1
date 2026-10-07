@@ -5,7 +5,7 @@ import (
 
 	"booking/internal/auth"
 	"booking/internal/dto"
-	"booking/internal/httpx"
+	"booking/pkg/httpx"
 )
 
 func (h *Handlers) AddCartItem(w http.ResponseWriter, r *http.Request) {

@@ -6,7 +6,7 @@ import (
 	"booking/internal/domain/request"
 	"booking/internal/domain/service"
 	"booking/internal/domain/user"
-	"booking/internal/ratelimit"
+	"booking/pkg/ratelimit"
 	"errors"
 	"log/slog"
 	"math"

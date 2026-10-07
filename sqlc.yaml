@@ -2,16 +2,16 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries:
-      - "queries/users.sql"
-      - "queries/services.sql"
-      - "queries/requests.sql"
-      - "queries/items.sql"
-      - "queries/bookings.sql"
-    schema: "migrations/init.sql"
+      - "internal/adapter/postgres/queries/users.sql"
+      - "internal/adapter/postgres/queries/services.sql"
+      - "internal/adapter/postgres/queries/requests.sql"
+      - "internal/adapter/postgres/queries/items.sql"
+      - "internal/adapter/postgres/queries/bookings.sql"
+    schema: "migration/postgres/init.sql"
     gen:
       go:
         package: "sqlc"
-        out: "../internal/storage/postgres/sqlc"
+        out: "internal/adapter/postgres/sqlc"
         sql_package: "pgx/v5"
         emit_pointers_for_null_types: true
         overrides:

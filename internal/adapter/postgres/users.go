@@ -1,8 +1,8 @@
 package postgres
 
 import (
+	"booking/internal/adapter/postgres/sqlc"
 	"booking/internal/domain/user"
-	"booking/internal/storage/postgres/sqlc"
 	"context"
 	"errors"
 

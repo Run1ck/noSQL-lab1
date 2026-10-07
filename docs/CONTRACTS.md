@@ -22,8 +22,8 @@
 | Подключение к Redis | `pkg/redis` |
 | Корзина в Redis: SET + TTL | `internal/adapter/redis/` |
 | Кэш услуг и броней поверх Postgres, инвалидация расписания на Approve | `internal/adapter/repository/` |
-| `ratelimit.Limiter` на Redis (Lua): лимит API и бан | `internal/ratelimit/` |
-| Middleware лимита + `ClientIP` | `internal/httpx/ratelimit_mw.go` |
+| `ratelimit.Limiter` на Redis (Lua): лимит API и бан | `pkg/ratelimit/` |
+| Middleware лимита + `ClientIP` | `pkg/httpx/ratelimit_mw.go` |
 | Use case'ы: каталог, расписание, корзина | `internal/usecase/{get_services,get_schedule,get_cart,add_cart_item,remove_cart_item,clear_cart}.go`, DTO — `internal/dto/` |
 | HTTP: каталог, расписание, корзина | `internal/controller/http/v1/` |
 | Сохранение и восстановление (AOF + RDB), проверка рестартом | `deploy/redis.conf` |
@@ -42,11 +42,11 @@
 
 | Задача | Где |
 |---|---|
-| Postgres в compose, схема | `deploy/compose.yaml` (сервис `postgres`), `deploy/postgres/init.sql` |
+| Postgres в compose, схема | `deploy/compose.yaml` (сервис `postgres`), `migration/postgres/init.sql` |
 | Пул Postgres | `pkg/postgres` |
-| Методы `usecase.Postgres`: пользователи, услуги, заявки, брони | `internal/adapter/postgres/` |
+| Методы `usecase.Postgres`: пользователи, услуги, заявки, брони | `internal/adapter/postgres/` (запросы — `queries/`, код sqlc — `sqlc/`, конфиг — `sqlc.yaml` в корне) |
 | `auth.Tokens` на JWT | `internal/auth/jwt.go` |
-| Middleware `Authenticate`, `RequireAdmin` | `internal/httpx/auth_mw.go` |
+| Middleware `Authenticate`, `RequireAdmin` | `pkg/httpx/auth_mw.go` |
 | Use case'ы: регистрация и вход, заявки пользователя, админка | `internal/usecase/`, DTO — `internal/dto/` |
 | HTTP: регистрация и вход, заявки пользователя, админка | `internal/controller/http/v1/` |
 | Создание админа при старте (`ADMIN_LOGIN` / `ADMIN_PASSWORD`) | use case, вызов из `internal/app` |
@@ -66,12 +66,12 @@
 
 - `internal/domain/**`
 - `internal/auth/auth.go`
-- `internal/ratelimit/ratelimit.go`
-- `internal/httpx/{json,errors}.go` (`module.go` больше не используется — маршруты в `router.go`)
+- `pkg/ratelimit/ratelimit.go`
+- `pkg/httpx/{json,errors}.go` (`module.go` больше не используется — маршруты в `router.go`)
 - `internal/usecase/usecase.go` — интерфейсы `Postgres`, `Redis`, `UseCase`, `New`: каждый дописывает свои методы
 - `internal/controller/http/router.go`, `internal/controller/http/v1/v1.go` — каждый дописывает свои маршруты
 - `.mockery.yml`, `internal/usecase/mocks/` (генерируется `make generate`)
-- `internal/config/config.go`, `deploy/.env.example`
+- `config/config.go`, `deploy/.env.example`
 - этот файл
 
 Остальное:
@@ -86,6 +86,8 @@
 
 ```
 cmd/app/main.go             config → app.Run
+config                      конфиг из env
+migration/postgres          схема БД
 internal/app                сборка: адаптеры → usecase.New → controller/http.Router
 internal/controller/http    router.go (маршруты) + v1/: Handlers, файл на хендлер
 internal/usecase            usecase.go (интерфейсы Postgres, Redis; UseCase; New) + файл на сценарий
@@ -93,6 +95,8 @@ internal/dto                Input/Output use case'ов; json-теги — фор
 internal/domain             сущности и доменные ошибки (общая зона)
 internal/adapter            redis (А), postgres (Б), repository — кэш Redis поверх postgres (А)
 pkg/redis, pkg/postgres     клиенты
+pkg/httpx                   JSON, ошибки (errorMap), middleware лимита и авторизации
+pkg/ratelimit               лимитер на Redis (Lua): интерфейс Limiter, окно, бан
 ```
 
 - Use case: `func (u *UseCase) X(ctx, dto.XInput) (dto.XOutput, error)`. Разбор
@@ -249,7 +253,7 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 ### Общее для всех `/api/*`
 
 - Ошибка: `{"error": {"code": "…", "message": "…"}}`. Коды и статусы — в
-  `internal/httpx/errors.go`, ответ пишется только через `httpx.WriteError`.
+  `pkg/httpx/errors.go`, ответ пишется только через `httpx.WriteError`.
 - 401 `unauthorized` — нет токена; 401 `invalid_token` — токен битый или истёк;
   403 `forbidden` — нужен администратор.
 - Любой запрос может получить 429 `rate_limited` с `Retry-After` в секундах.

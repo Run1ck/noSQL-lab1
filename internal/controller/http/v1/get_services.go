@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	"booking/internal/httpx"
+	"booking/pkg/httpx"
 )
 
 func (h *Handlers) GetServices(w http.ResponseWriter, r *http.Request) {

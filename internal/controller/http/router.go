@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	ver1 "booking/internal/controller/http/v1"
-	"booking/internal/httpx"
 	"booking/internal/usecase"
+	"booking/pkg/httpx"
 )
 
 func Router(mux *http.ServeMux, uc *usecase.UseCase, mw httpx.Middlewares) {

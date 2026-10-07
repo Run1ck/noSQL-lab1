@@ -1,9 +1,9 @@
 package postgres
 
 import (
+	"booking/internal/adapter/postgres/sqlc"
 	"booking/internal/domain/request"
 	"booking/internal/domain/service"
-	"booking/internal/storage/postgres/sqlc"
 	"context"
 
 	"github.com/google/uuid"

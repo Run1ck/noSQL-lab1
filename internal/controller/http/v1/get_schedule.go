@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"booking/internal/dto"
-	"booking/internal/httpx"
+	"booking/pkg/httpx"
 )
 
 func (h *Handlers) GetSchedule(w http.ResponseWriter, r *http.Request) {

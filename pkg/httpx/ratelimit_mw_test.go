@@ -1,7 +1,7 @@
 package httpx
 
 import (
-	"booking/internal/ratelimit"
+	"booking/pkg/ratelimit"
 	"bytes"
 	"context"
 	"encoding/json"
