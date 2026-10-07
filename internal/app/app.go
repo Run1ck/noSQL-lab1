@@ -22,6 +22,7 @@ import (
 	"booking/pkg/postgres"
 	"booking/pkg/ratelimit"
 	"booking/pkg/redis"
+	"booking/web"
 )
 
 const (
@@ -68,6 +69,7 @@ func Run(cfg config.Config) error {
 
 	mux := http.NewServeMux()
 	controllerhttp.Router(mux, uc, httpx.NewMiddlewares(tokens))
+	mux.Handle("/", web.Handler())
 
 	srv := &http.Server{
 		Addr:              cfg.PORT,
