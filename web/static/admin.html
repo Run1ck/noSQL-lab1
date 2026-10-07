@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админка · Booking</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header id="nav"></header>
+  <main class="container">
+    <div class="page-head row">
+      <div class="spacer">
+        <h1>Админка</h1>
+        <p>Обработка заявок и управление каталогом услуг.</p>
+      </div>
+      <div class="chips" id="tabs">
+        <button class="chip active" data-tab="requests">Заявки</button>
+        <button class="chip" data-tab="services">Услуги</button>
+      </div>
+    </div>
+
+    <section id="tab-requests">
+      <div class="panel glass" style="margin-bottom:16px">
+        <div class="chips" id="status-filter">
+          <button class="chip active" data-status="new">Новые</button>
+          <button class="chip" data-status="approved">Одобренные</button>
+          <button class="chip" data-status="rejected">Отклонённые</button>
+          <button class="chip" data-status="cancelled">Отменённые</button>
+          <button class="chip" data-status="">Все</button>
+        </div>
+      </div>
+      <div class="list" id="requests"></div>
+    </section>
+
+    <section id="tab-services" hidden>
+      <div class="panel glass">
+        <h2 id="service-form-title">Новая услуга</h2>
+        <form class="form-grid" id="service-form" novalidate>
+          <label class="field">ID
+            <input class="input" name="id" placeholder="room-101" required>
+          </label>
+          <label class="field">Название
+            <input class="input" name="name" placeholder="Аудитория 101" required>
+          </label>
+          <label class="field">Тип
+            <select class="input" name="kind">
+              <option value="room">Аудитория</option>
+              <option value="lab">Лаборатория</option>
+              <option value="equipment">Оборудование</option>
+            </select>
+          </label>
+          <label class="switch"><input type="checkbox" name="active" checked><span class="track"></span>Активна</label>
+          <div class="row">
+            <button class="btn primary" type="submit">Сохранить</button>
+            <button class="btn ghost" type="reset" id="service-reset">Сбросить</button>
+          </div>
+        </form>
+      </div>
+      <div class="panel glass">
+        <h2>Каталог <span class="faint small" id="services-count"></span></h2>
+        <div style="overflow-x:auto">
+          <table class="data">
+            <thead><tr><th>ID</th><th>Название</th><th>Тип</th><th>Статус</th><th></th></tr></thead>
+            <tbody id="services"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">noSQL lab · Postgres + Redis</footer>
+  <script type="module" src="/admin.js"></script>
+</body>
+</html>
