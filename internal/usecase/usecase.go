@@ -6,11 +6,13 @@ import (
 
 	"github.com/google/uuid"
 
+	"booking/internal/auth"
 	"booking/internal/domain/booking"
 	"booking/internal/domain/cart"
 	"booking/internal/domain/request"
 	"booking/internal/domain/service"
 	"booking/internal/domain/user"
+	"booking/pkg/ratelimit"
 )
 
 //go:generate mockery
@@ -48,11 +50,15 @@ type Postgres interface {
 type UseCase struct {
 	postgres Postgres
 	redis    Redis
+	tokens   auth.Tokens
+	ban      ratelimit.Limiter
 }
 
-func New(postgres Postgres, redis Redis) *UseCase {
+func New(postgres Postgres, redis Redis, tokens auth.Tokens, ban ratelimit.Limiter) *UseCase {
 	return &UseCase{
 		postgres: postgres,
 		redis:    redis,
+		tokens:   tokens,
+		ban:      ban,
 	}
 }

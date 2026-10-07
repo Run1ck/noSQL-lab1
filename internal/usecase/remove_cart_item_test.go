@@ -29,7 +29,7 @@ func Test_RemoveCartItem_Success(t *testing.T) {
 	defer redis.AssertCalled(t, "RemoveCartItem", Any, userID, item)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест
 		input := dto.RemoveCartItemInput{UserID: userID, ServiceID: "room-101", Date: "2026-10-06"}
@@ -53,7 +53,7 @@ func Test_RemoveCartItem_NotFound(t *testing.T) {
 	redis.On("RemoveCartItem", Any, userID, Any).Return(cart.ErrItemNotFound)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест
 		input := dto.RemoveCartItemInput{UserID: userID, ServiceID: "room-101", Date: "2026-10-06"}
@@ -65,7 +65,7 @@ func Test_RemoveCartItem_NotFound(t *testing.T) {
 
 func Test_RemoveCartItem_InvalidDate(t *testing.T) {
 	// Собираем UseCase: до Redis дело не доходит
-	u := usecase.New(nil, nil)
+	u := usecase.New(nil, nil, nil, nil)
 
 	{ // Сам тест
 		input := dto.RemoveCartItemInput{UserID: uuid.New(), ServiceID: "room-101", Date: "2026-02-30"}

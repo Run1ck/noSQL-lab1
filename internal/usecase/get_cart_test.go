@@ -40,7 +40,7 @@ func Test_GetCart_Success(t *testing.T) {
 	defer redis.AssertCalled(t, "GetCart", Any, userID)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест: по дате, затем по ID услуги; секунды — с округлением вверх
 		output := dto.CartOutput{
@@ -68,7 +68,7 @@ func Test_GetCart_Empty(t *testing.T) {
 	redis.On("GetCartTTL", Any, userID).Return(time.Duration(0), nil)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест: пустой срез, а не nil — в JSON будет [], а не null
 		actual, err := u.GetCart(context.Background(), dto.GetCartInput{UserID: userID})
@@ -87,7 +87,7 @@ func Test_GetCart_Error(t *testing.T) {
 	redis.On("GetCart", Any, userID).Return(nil, errRedis)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест
 		_, err := u.GetCart(context.Background(), dto.GetCartInput{UserID: userID})

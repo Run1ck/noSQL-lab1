@@ -33,7 +33,7 @@ func Test_GetSchedule_Success(t *testing.T) {
 	postgres.On("GetBookings", Any, date("2026-10-06")).Return(nil, nil)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, nil)
+	u := usecase.New(postgres, nil, nil, nil)
 
 	{ // Сам тест: занятые — по возрастанию, у свободного дня пустой срез
 		input := dto.GetScheduleInput{From: "2026-10-05", To: "2026-10-06"}
@@ -54,7 +54,7 @@ func Test_GetSchedule_Ranges(t *testing.T) {
 	postgres.On("GetBookings", Any, Any).Return(nil, nil)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, nil)
+	u := usecase.New(postgres, nil, nil, nil)
 
 	for _, tc := range []struct {
 		from, to    string
@@ -76,7 +76,7 @@ func Test_GetSchedule_Ranges(t *testing.T) {
 
 func Test_GetSchedule_InvalidInput(t *testing.T) {
 	// Собираем UseCase: до Postgres дело не доходит
-	u := usecase.New(nil, nil)
+	u := usecase.New(nil, nil, nil, nil)
 
 	for _, tc := range []struct {
 		from, to string
@@ -102,7 +102,7 @@ func Test_GetSchedule_Error(t *testing.T) {
 	postgres.On("GetBookings", Any, Any).Return(nil, errDB)
 
 	// Собираем UseCase
-	u := usecase.New(postgres, nil)
+	u := usecase.New(postgres, nil, nil, nil)
 
 	{ // Сам тест
 		_, err := u.GetSchedule(context.Background(), dto.GetScheduleInput{From: "2026-10-05", To: "2026-10-05"})

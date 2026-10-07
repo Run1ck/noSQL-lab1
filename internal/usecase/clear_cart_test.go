@@ -23,7 +23,7 @@ func Test_ClearCart_Success(t *testing.T) {
 	defer redis.AssertCalled(t, "DeleteCart", Any, userID)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест
 		err := u.ClearCart(context.Background(), dto.ClearCartInput{UserID: userID})
@@ -41,7 +41,7 @@ func Test_ClearCart_Error(t *testing.T) {
 	redis.On("DeleteCart", Any, userID).Return(errRedis)
 
 	// Собираем UseCase
-	u := usecase.New(nil, redis)
+	u := usecase.New(nil, redis, nil, nil)
 
 	{ // Сам тест
 		err := u.ClearCart(context.Background(), dto.ClearCartInput{UserID: userID})
