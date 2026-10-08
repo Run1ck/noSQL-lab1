@@ -10,7 +10,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// defaultPostgresDSN совпадает с сервисом postgres в deploy/compose.yaml.
 const defaultPostgresDSN = "postgres://booking:booking@127.0.0.1:5432/booking?sslmode=disable"
 
 type Config struct {
@@ -25,7 +24,6 @@ type Config struct {
 	RateLimit  int
 	RateWindow time.Duration
 
-	// Бан за частые заявки: больше BanLimit заявок за BanWindow — бан на BanTTL.
 	BanLimit  int
 	BanWindow time.Duration
 	BanTTL    time.Duration
@@ -35,8 +33,6 @@ type Config struct {
 	JWTSecret string
 	JWTTTL    time.Duration
 
-	// Администратор, которого приложение создаёт при старте, если его ещё
-	// нет. Пустой пароль — не создавать.
 	AdminLogin    string
 	AdminPassword string
 }

@@ -14,11 +14,6 @@ import (
 	"strconv"
 )
 
-// ErrorResponse — тело любого ответа с ошибкой:
-//
-//	{"error": {"code": "slot_booked", "message": "slot is already booked"}}
-//
-// По code клиент (UI, нагрузочный тест) решает, что делать; message — для человека.
 type ErrorResponse struct {
 	Error ErrorBody `json:"error"`
 }
@@ -28,8 +23,6 @@ type ErrorBody struct {
 	Message string `json:"message"`
 }
 
-// errorMap — единственное место, где ошибки превращаются в HTTP-статус и код.
-// Кто заводит новую ошибку, тот и добавляет её сюда.
 var errorMap = []struct {
 	err    error
 	status int
@@ -67,8 +60,6 @@ var errorMap = []struct {
 	{request.ErrSlotBooked, http.StatusConflict, "slot_booked"},
 }
 
-// WriteError пишет ответ с ошибкой. На ошибку не из errorMap отвечает 500
-// без подробностей, а саму ошибку пишет в лог.
 func WriteError(w http.ResponseWriter, err error) {
 	var limited *ratelimit.LimitedError
 	if errors.As(err, &limited) {

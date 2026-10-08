@@ -10,10 +10,8 @@ import (
 	"booking/internal/dto"
 )
 
-// maxScheduleDays — дней за запрос: каждый день — отдельный GetBookings.
 const maxScheduleDays = 31
 
-// GetSchedule — занятость каждого дня от From до To включительно.
 func (u *UseCase) GetSchedule(ctx context.Context, input dto.GetScheduleInput) (dto.GetScheduleOutput, error) {
 	var output dto.GetScheduleOutput
 
@@ -63,7 +61,6 @@ func addDays(d service.Date, n int) service.Date {
 	return service.DateOf(midnight(d).AddDate(0, 0, n))
 }
 
-// midnight — начало дня в UTC: там нет перевода часов, в сутках всегда 24 часа.
 func midnight(d service.Date) time.Time {
 	return time.Date(d.Year, d.Month, d.Day, 0, 0, 0, 0, time.UTC)
 }

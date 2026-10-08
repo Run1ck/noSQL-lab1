@@ -24,7 +24,6 @@ func ParseDate(s string) (Date, error) {
 	return DateOf(t), nil
 }
 
-// IsValid отсекает несуществующие дни вроде 30 февраля и нулевой Date{}.
 func (d Date) IsValid() bool {
 	return DateOf(time.Date(d.Year, d.Month, d.Day, 0, 0, 0, 0, time.UTC)) == d
 }
@@ -33,8 +32,6 @@ func (d Date) String() string {
 	return fmt.Sprintf("%04d-%02d-%02d", d.Year, d.Month, d.Day)
 }
 
-// MarshalText и UnmarshalText задают формат даты в JSON и в ключах Redis:
-// YYYY-MM-DD.
 func (d Date) MarshalText() ([]byte, error) {
 	return []byte(d.String()), nil
 }
