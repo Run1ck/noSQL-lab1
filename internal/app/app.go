@@ -13,6 +13,7 @@ import (
 	"booking/config"
 	adapterpostgres "booking/internal/adapter/postgres"
 	adapterredis "booking/internal/adapter/redis"
+	"booking/internal/adapter/repository"
 	"booking/internal/auth"
 	controllerhttp "booking/internal/controller/http"
 	"booking/internal/dto"
@@ -21,6 +22,7 @@ import (
 	"booking/pkg/postgres"
 	"booking/pkg/ratelimit"
 	"booking/pkg/redis"
+	"booking/web"
 )
 
 const (
@@ -48,6 +50,9 @@ func Run(cfg config.Config) error {
 	defer client.Close()
 
 	var pg usecase.Postgres = adapterpostgres.New(pool)
+	if cfg.CacheEnabled {
+		pg = repository.New(client, pg, cfg.CacheTTL)
+	}
 	tokens := auth.NewJWT(cfg.JWTSecret, cfg.JWTTTL)
 	apiLimit := ratelimit.NewRedis(client, "rl:api", cfg.RateLimit, cfg.RateWindow)
 	banLimit := ratelimit.NewBan(client, cfg.BanLimit, cfg.BanWindow, cfg.BanTTL)
@@ -64,6 +69,7 @@ func Run(cfg config.Config) error {
 
 	mux := http.NewServeMux()
 	controllerhttp.Router(mux, uc, httpx.NewMiddlewares(tokens))
+	mux.Handle("/", web.Handler())
 
 	srv := &http.Server{
 		Addr:              cfg.PORT,
