@@ -9,15 +9,14 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
 	mr := miniredis.RunT(t)
 
 	rdb, err := New(context.Background(), mr.Addr())
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	require.NoError(t, err)
 	_ = rdb.Close()
 }
 
@@ -25,12 +24,9 @@ func TestNew(t *testing.T) {
 // на тех же настройках клиента работает fail-open лимита API.
 func TestNew_UnreachableFailsFast(t *testing.T) {
 	start := time.Now()
-	if _, err := New(context.Background(), "127.0.0.1:1"); err == nil {
-		t.Fatal("want error for unreachable Redis")
-	}
-	if d := time.Since(start); d > 200*time.Millisecond {
-		t.Fatalf("New took %s, want fast failure", d)
-	}
+	_, err := New(context.Background(), "127.0.0.1:1")
+	require.Error(t, err)
+	require.Less(t, time.Since(start), 200*time.Millisecond, "want fast failure")
 }
 
 // Ответ опоздал дольше ReadTimeout — команда не повторяется: Redis её уже
@@ -41,18 +37,13 @@ func TestNew_NoRetryAfterReadTimeout(t *testing.T) {
 	addr := delayingProxy(t, mr.Addr(), &stall, timeout+200*time.Millisecond)
 
 	rdb, err := New(context.Background(), addr)
-	if err != nil {
-		t.Fatalf("New: %v", err)
-	}
+	require.NoError(t, err)
 	t.Cleanup(func() { _ = rdb.Close() })
 
 	stall.Store(true)
-	if err := rdb.Incr(context.Background(), "counter").Err(); err == nil {
-		t.Fatal("want read timeout")
-	}
-	if got, _ := mr.Get("counter"); got != "1" {
-		t.Fatalf("counter = %q, want 1: command was retried", got)
-	}
+	require.Error(t, rdb.Incr(context.Background(), "counter").Err(), "want read timeout")
+	got, _ := mr.Get("counter")
+	require.Equal(t, "1", got, "command was retried")
 }
 
 // delayingProxy проксирует TCP до addr. Если stall == true, следующий ответ
@@ -61,9 +52,7 @@ func TestNew_NoRetryAfterReadTimeout(t *testing.T) {
 func delayingProxy(t *testing.T, addr string, stall *atomic.Bool, delay time.Duration) string {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	t.Cleanup(func() { _ = ln.Close() })
 	go func() {
 		for {

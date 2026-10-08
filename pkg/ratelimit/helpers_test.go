@@ -8,6 +8,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestRedis(t *testing.T) (*redis.Client, *miniredis.Miniredis) {
@@ -21,9 +22,7 @@ func newTestRedis(t *testing.T) (*redis.Client, *miniredis.Miniredis) {
 func mustAllow(t *testing.T, l Limiter, key string) Decision {
 	t.Helper()
 	d, err := l.Allow(context.Background(), key)
-	if err != nil {
-		t.Fatalf("Allow(%q): %v", key, err)
-	}
+	require.NoError(t, err, "Allow(%q)", key)
 	return d
 }
 
@@ -39,6 +38,7 @@ func allowConcurrently(t *testing.T, l Limiter, key string, n int) int {
 		wg.Go(func() {
 			d, err := l.Allow(context.Background(), key)
 			if err != nil {
+				// Не require: FailNow нельзя звать не из горутины теста.
 				t.Errorf("Allow: %v", err)
 				return
 			}
