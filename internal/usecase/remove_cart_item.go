@@ -22,10 +22,10 @@ func (u *UseCase) RemoveCartItem(ctx context.Context, input dto.RemoveCartItemIn
 		return output, fmt.Errorf("u.redis.RemoveCartItem: %w", err)
 	}
 
-	output, err = u.cart(ctx, input.UserID)
+	c, err := u.redis.GetCart(ctx, input.UserID)
 	if err != nil {
-		return output, fmt.Errorf("u.cart: %w", err)
+		return output, fmt.Errorf("u.redis.GetCart: %w", err)
 	}
 
-	return output, nil
+	return toCart(c), nil
 }

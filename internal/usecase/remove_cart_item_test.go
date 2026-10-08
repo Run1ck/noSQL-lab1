@@ -19,13 +19,13 @@ func Test_RemoveCartItem_Success(t *testing.T) {
 	// Данные для поведения
 	userID := uuid.New()
 	item := cart.Item{ServiceID: "room-101", Date: date("2026-10-06")}
-	rest := cart.Item{ServiceID: "lab-1", Date: date("2026-10-06")}
+	rest := newCart(userID, cart.Item{ServiceID: "lab-1", Date: date("2026-10-06")})
+	rest.TTL = 30 * time.Minute
 
 	// Настраиваем поведение Redis
 	redis := new(mocks.Redis)
 	redis.On("RemoveCartItem", Any, userID, item).Return(nil)
-	redis.On("GetCart", Any, userID).Return(newCart(userID, rest), nil)
-	redis.On("GetCartTTL", Any, userID).Return(30*time.Minute, nil)
+	redis.On("GetCart", Any, userID).Return(rest, nil)
 	defer redis.AssertCalled(t, "RemoveCartItem", Any, userID, item)
 
 	// Собираем UseCase

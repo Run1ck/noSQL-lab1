@@ -11,7 +11,6 @@ import (
 	"booking/internal/domain/service"
 	"booking/internal/domain/user"
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -42,6 +41,53 @@ type Redis_Expecter struct {
 
 func (_m *Redis) EXPECT() *Redis_Expecter {
 	return &Redis_Expecter{mock: &_m.Mock}
+}
+
+// AddCartItem provides a mock function for the type Redis
+func (_mock *Redis) AddCartItem(ctx context.Context, userID uuid.UUID, item cart.Item) error {
+	ret := _mock.Called(ctx, userID, item)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddCartItem")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, cart.Item) error); ok {
+		r0 = returnFunc(ctx, userID, item)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Redis_AddCartItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddCartItem'
+type Redis_AddCartItem_Call struct {
+	*mock.Call
+}
+
+// AddCartItem is a helper method to define mock.On call
+//   - ctx
+//   - userID
+//   - item
+func (_e *Redis_Expecter) AddCartItem(ctx interface{}, userID interface{}, item interface{}) *Redis_AddCartItem_Call {
+	return &Redis_AddCartItem_Call{Call: _e.mock.On("AddCartItem", ctx, userID, item)}
+}
+
+func (_c *Redis_AddCartItem_Call) Run(run func(ctx context.Context, userID uuid.UUID, item cart.Item)) *Redis_AddCartItem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(cart.Item))
+	})
+	return _c
+}
+
+func (_c *Redis_AddCartItem_Call) Return(err error) *Redis_AddCartItem_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Redis_AddCartItem_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, item cart.Item) error) *Redis_AddCartItem_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // DeleteCart provides a mock function for the type Redis
@@ -147,61 +193,6 @@ func (_c *Redis_GetCart_Call) RunAndReturn(run func(ctx context.Context, userID 
 	return _c
 }
 
-// GetCartTTL provides a mock function for the type Redis
-func (_mock *Redis) GetCartTTL(ctx context.Context, userID uuid.UUID) (time.Duration, error) {
-	ret := _mock.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetCartTTL")
-	}
-
-	var r0 time.Duration
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (time.Duration, error)); ok {
-		return returnFunc(ctx, userID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) time.Duration); ok {
-		r0 = returnFunc(ctx, userID)
-	} else {
-		r0 = ret.Get(0).(time.Duration)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Redis_GetCartTTL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCartTTL'
-type Redis_GetCartTTL_Call struct {
-	*mock.Call
-}
-
-// GetCartTTL is a helper method to define mock.On call
-//   - ctx
-//   - userID
-func (_e *Redis_Expecter) GetCartTTL(ctx interface{}, userID interface{}) *Redis_GetCartTTL_Call {
-	return &Redis_GetCartTTL_Call{Call: _e.mock.On("GetCartTTL", ctx, userID)}
-}
-
-func (_c *Redis_GetCartTTL_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *Redis_GetCartTTL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *Redis_GetCartTTL_Call) Return(duration time.Duration, err error) *Redis_GetCartTTL_Call {
-	_c.Call.Return(duration, err)
-	return _c
-}
-
-func (_c *Redis_GetCartTTL_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (time.Duration, error)) *Redis_GetCartTTL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RemoveCartItem provides a mock function for the type Redis
 func (_mock *Redis) RemoveCartItem(ctx context.Context, userID uuid.UUID, item cart.Item) error {
 	ret := _mock.Called(ctx, userID, item)
@@ -245,52 +236,6 @@ func (_c *Redis_RemoveCartItem_Call) Return(err error) *Redis_RemoveCartItem_Cal
 }
 
 func (_c *Redis_RemoveCartItem_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, item cart.Item) error) *Redis_RemoveCartItem_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SaveCart provides a mock function for the type Redis
-func (_mock *Redis) SaveCart(ctx context.Context, c *cart.Cart) error {
-	ret := _mock.Called(ctx, c)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveCart")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *cart.Cart) error); ok {
-		r0 = returnFunc(ctx, c)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Redis_SaveCart_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveCart'
-type Redis_SaveCart_Call struct {
-	*mock.Call
-}
-
-// SaveCart is a helper method to define mock.On call
-//   - ctx
-//   - c
-func (_e *Redis_Expecter) SaveCart(ctx interface{}, c interface{}) *Redis_SaveCart_Call {
-	return &Redis_SaveCart_Call{Call: _e.mock.On("SaveCart", ctx, c)}
-}
-
-func (_c *Redis_SaveCart_Call) Run(run func(ctx context.Context, c *cart.Cart)) *Redis_SaveCart_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*cart.Cart))
-	})
-	return _c
-}
-
-func (_c *Redis_SaveCart_Call) Return(err error) *Redis_SaveCart_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Redis_SaveCart_Call) RunAndReturn(run func(ctx context.Context, c *cart.Cart) error) *Redis_SaveCart_Call {
 	_c.Call.Return(run)
 	return _c
 }

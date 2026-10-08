@@ -1,16 +1,17 @@
 package redis
 
 import (
-	"booking/internal/domain/cart"
-	"booking/internal/domain/service"
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/require"
+
+	"booking/internal/domain/cart"
+	"booking/internal/domain/service"
 )
 
 const testTTL = 30 * time.Minute
@@ -31,109 +32,62 @@ func item(serviceID, date string) cart.Item {
 	return cart.Item{ServiceID: serviceID, Date: d}
 }
 
-func cartWith(userID uuid.UUID, items ...cart.Item) *cart.Cart {
-	c := &cart.Cart{UserID: userID, Items: make(map[cart.Item]struct{})}
-	for _, it := range items {
-		c.AddItem(it)
+// items — позиции в том виде, в каком их хранит cart.Cart.
+func items(its ...cart.Item) map[cart.Item]struct{} {
+	m := make(map[cart.Item]struct{}, len(its))
+	for _, it := range its {
+		m[it] = struct{}{}
 	}
-	return c
+	return m
+}
+
+func mustAdd(t *testing.T, r *Redis, userID uuid.UUID, its ...cart.Item) {
+	t.Helper()
+	for _, it := range its {
+		require.NoError(t, r.AddCartItem(context.Background(), userID, it))
+	}
 }
 
 func mustGet(t *testing.T, r *Redis, userID uuid.UUID) *cart.Cart {
 	t.Helper()
 	c, err := r.GetCart(context.Background(), userID)
-	if err != nil {
-		t.Fatalf("GetCart: %v", err)
-	}
+	require.NoError(t, err)
 	return c
-}
-
-func mustTTL(t *testing.T, r *Redis, userID uuid.UUID) time.Duration {
-	t.Helper()
-	d, err := r.GetCartTTL(context.Background(), userID)
-	if err != nil {
-		t.Fatalf("GetCartTTL: %v", err)
-	}
-	return d
 }
 
 func TestCarts_GetMissingReturnsEmpty(t *testing.T) {
 	r, _ := newTestCarts(t)
 	userID := uuid.New()
 
-	c := mustGet(t, r, userID)
-	if c.UserID != userID || !c.IsEmpty() || c.Items == nil {
-		t.Fatalf("want empty cart of %s, got %+v", userID, c)
-	}
-	if d := mustTTL(t, r, userID); d != 0 {
-		t.Fatalf("TTL of missing cart = %s, want 0", d)
-	}
+	// Items — пустая map, а не nil; TTL — 0.
+	require.Equal(t, &cart.Cart{UserID: userID, Items: items()}, mustGet(t, r, userID))
 }
 
-func TestCarts_SaveAndGet(t *testing.T) {
+func TestCarts_AddAndGet(t *testing.T) {
 	r, mr := newTestCarts(t)
-	ctx := context.Background()
 	userID := uuid.New()
 	a, b := item("room-101", "2026-10-05"), item("lab|odd-id", "2026-10-06")
 
-	if err := r.SaveCart(ctx, cartWith(userID, a, b)); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
+	mustAdd(t, r, userID, a, b)
 
-	c := mustGet(t, r, userID)
-	if len(c.Items) != 2 {
-		t.Fatalf("want 2 items, got %v", c.Items)
-	}
-	for _, it := range []cart.Item{a, b} {
-		if _, ok := c.Items[it]; !ok {
-			t.Errorf("item %+v lost", it)
-		}
-	}
-	if got := mr.TTL(cartKey(userID)); got != testTTL {
-		t.Fatalf("key TTL = %s, want %s", got, testTTL)
-	}
-	if got := mr.Type(cartKey(userID)); got != "set" {
-		t.Fatalf("key type = %q, want set", got)
-	}
+	require.Equal(t, &cart.Cart{UserID: userID, Items: items(a, b), TTL: testTTL}, mustGet(t, r, userID))
+	require.Equal(t, "set", mr.Type(cartKey(userID)))
 }
 
-func TestCarts_SaveReplacesAndProlongs(t *testing.T) {
+// Любое добавление, и повтор позиции тоже, продлевает всю корзину.
+func TestCarts_AddProlongs(t *testing.T) {
 	r, mr := newTestCarts(t)
-	ctx := context.Background()
 	userID := uuid.New()
 	a, b := item("room-101", "2026-10-05"), item("room-102", "2026-10-05")
 
-	if err := r.SaveCart(ctx, cartWith(userID, a)); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
+	mustAdd(t, r, userID, a)
 	mr.FastForward(10 * time.Minute)
-	if err := r.SaveCart(ctx, cartWith(userID, b)); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
+	mustAdd(t, r, userID, b)
+	require.Equal(t, &cart.Cart{UserID: userID, Items: items(a, b), TTL: testTTL}, mustGet(t, r, userID))
 
-	c := mustGet(t, r, userID)
-	if _, ok := c.Items[b]; !ok || len(c.Items) != 1 {
-		t.Fatalf("want only %+v, got %v", b, c.Items)
-	}
-	if d := mustTTL(t, r, userID); d != testTTL {
-		t.Fatalf("TTL after Save = %s, want %s", d, testTTL)
-	}
-}
-
-func TestCarts_SaveEmptyDeletes(t *testing.T) {
-	r, mr := newTestCarts(t)
-	ctx := context.Background()
-	userID := uuid.New()
-
-	if err := r.SaveCart(ctx, cartWith(userID, item("room-101", "2026-10-05"))); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-	if err := r.SaveCart(ctx, cartWith(userID)); err != nil {
-		t.Fatalf("Save empty: %v", err)
-	}
-	if mr.Exists(cartKey(userID)) {
-		t.Fatal("empty cart must be deleted")
-	}
+	mr.FastForward(10 * time.Minute)
+	mustAdd(t, r, userID, a)
+	require.Equal(t, &cart.Cart{UserID: userID, Items: items(a, b), TTL: testTTL}, mustGet(t, r, userID))
 }
 
 func TestCarts_RemoveItem(t *testing.T) {
@@ -142,29 +96,15 @@ func TestCarts_RemoveItem(t *testing.T) {
 	userID := uuid.New()
 	a, b := item("room-101", "2026-10-05"), item("room-102", "2026-10-05")
 
-	if err := r.SaveCart(ctx, cartWith(userID, a, b)); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
+	mustAdd(t, r, userID, a, b)
 	mr.FastForward(10 * time.Minute)
 
-	if err := r.RemoveCartItem(ctx, userID, a); err != nil {
-		t.Fatalf("RemoveItem: %v", err)
-	}
-	c := mustGet(t, r, userID)
-	if _, ok := c.Items[b]; !ok || len(c.Items) != 1 {
-		t.Fatalf("want only %+v, got %v", b, c.Items)
-	}
-	if d := mustTTL(t, r, userID); d != testTTL {
-		t.Fatalf("TTL after RemoveItem = %s, want %s", d, testTTL)
-	}
+	require.NoError(t, r.RemoveCartItem(ctx, userID, a))
+	require.Equal(t, &cart.Cart{UserID: userID, Items: items(b), TTL: testTTL}, mustGet(t, r, userID))
 
 	// Последняя позиция: SET пустеет и пропадает вместе с ключом.
-	if err := r.RemoveCartItem(ctx, userID, b); err != nil {
-		t.Fatalf("RemoveItem last: %v", err)
-	}
-	if mr.Exists(cartKey(userID)) {
-		t.Fatal("cart without items must be gone")
-	}
+	require.NoError(t, r.RemoveCartItem(ctx, userID, b))
+	require.False(t, mr.Exists(cartKey(userID)), "cart without items must be gone")
 }
 
 func TestCarts_RemoveMissingItem(t *testing.T) {
@@ -172,39 +112,24 @@ func TestCarts_RemoveMissingItem(t *testing.T) {
 	ctx := context.Background()
 	userID := uuid.New()
 
-	if err := r.RemoveCartItem(ctx, userID, item("room-101", "2026-10-05")); !errors.Is(err, cart.ErrItemNotFound) {
-		t.Fatalf("RemoveItem on missing cart: err = %v, want ErrItemNotFound", err)
-	}
+	require.ErrorIs(t, r.RemoveCartItem(ctx, userID, item("room-101", "2026-10-05")), cart.ErrItemNotFound)
 
-	if err := r.SaveCart(ctx, cartWith(userID, item("room-101", "2026-10-05"))); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
+	mustAdd(t, r, userID, item("room-101", "2026-10-05"))
 	mr.FastForward(10 * time.Minute)
-	if err := r.RemoveCartItem(ctx, userID, item("room-101", "2026-10-06")); !errors.Is(err, cart.ErrItemNotFound) {
-		t.Fatalf("RemoveItem of missing item: err = %v, want ErrItemNotFound", err)
-	}
+	require.ErrorIs(t, r.RemoveCartItem(ctx, userID, item("room-101", "2026-10-06")), cart.ErrItemNotFound)
+
 	// Неудачное удаление не должно продлевать корзину.
-	if d := mustTTL(t, r, userID); d != testTTL-10*time.Minute {
-		t.Fatalf("TTL = %s, want %s", d, testTTL-10*time.Minute)
-	}
+	require.Equal(t, testTTL-10*time.Minute, mustGet(t, r, userID).TTL)
 }
 
 func TestCarts_Expires(t *testing.T) {
 	r, mr := newTestCarts(t)
-	ctx := context.Background()
 	userID := uuid.New()
 
-	if err := r.SaveCart(ctx, cartWith(userID, item("room-101", "2026-10-05"))); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
+	mustAdd(t, r, userID, item("room-101", "2026-10-05"))
 	mr.FastForward(testTTL)
 
-	if c := mustGet(t, r, userID); !c.IsEmpty() {
-		t.Fatalf("expired cart must be empty, got %v", c.Items)
-	}
-	if d := mustTTL(t, r, userID); d != 0 {
-		t.Fatalf("TTL of expired cart = %s, want 0", d)
-	}
+	require.Equal(t, &cart.Cart{UserID: userID, Items: items()}, mustGet(t, r, userID))
 }
 
 func TestCarts_DeleteCart(t *testing.T) {
@@ -212,18 +137,11 @@ func TestCarts_DeleteCart(t *testing.T) {
 	ctx := context.Background()
 	userID := uuid.New()
 
-	if err := r.DeleteCart(ctx, userID); err != nil {
-		t.Fatalf("DeleteCart on missing cart: %v", err)
-	}
-	if err := r.SaveCart(ctx, cartWith(userID, item("room-101", "2026-10-05"))); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-	if err := r.DeleteCart(ctx, userID); err != nil {
-		t.Fatalf("DeleteCart: %v", err)
-	}
-	if mr.Exists(cartKey(userID)) {
-		t.Fatal("cart must be deleted")
-	}
+	require.NoError(t, r.DeleteCart(ctx, userID), "missing cart")
+
+	mustAdd(t, r, userID, item("room-101", "2026-10-05"))
+	require.NoError(t, r.DeleteCart(ctx, userID))
+	require.False(t, mr.Exists(cartKey(userID)), "cart must be deleted")
 }
 
 func TestCarts_GetCorruptedMember(t *testing.T) {
@@ -231,50 +149,13 @@ func TestCarts_GetCorruptedMember(t *testing.T) {
 		t.Run(member, func(t *testing.T) {
 			r, mr := newTestCarts(t)
 			userID := uuid.New()
-			if _, err := mr.SAdd(cartKey(userID), member); err != nil {
-				t.Fatal(err)
-			}
+			_, err := mr.SAdd(cartKey(userID), member)
+			require.NoError(t, err)
 
-			_, err := r.GetCart(context.Background(), userID)
-			if err == nil {
-				t.Fatal("want error for corrupted member")
-			}
-			if errors.Is(err, service.ErrInvalidDate) {
-				t.Fatal("corrupted data must not map to invalid_date")
-			}
+			_, err = r.GetCart(context.Background(), userID)
+			require.Error(t, err)
+			require.NotErrorIs(t, err, service.ErrInvalidDate, "corrupted data must not map to invalid_date")
 		})
-	}
-}
-
-func TestCarts_SaveRejectsInvalidItem(t *testing.T) {
-	r, mr := newTestCarts(t)
-	userID := uuid.New()
-	valid := service.Date{Year: 2026, Month: time.October, Day: 5}
-
-	for _, it := range []cart.Item{
-		{ServiceID: "room-101"},
-		{ServiceID: "room-101", Date: service.Date{Year: 2026, Month: time.February, Day: 30}},
-		{Date: valid},
-	} {
-		if err := r.SaveCart(context.Background(), cartWith(userID, it)); err == nil {
-			t.Errorf("Save(%+v): want error", it)
-		}
-	}
-	if mr.Exists(cartKey(userID)) {
-		t.Fatal("invalid cart must not be written")
-	}
-}
-
-// Ключ без TTL корзины не пишут, но TTL() должен отдать 0, а не -1ns.
-func TestCarts_TTLOfKeyWithoutExpiry(t *testing.T) {
-	r, mr := newTestCarts(t)
-	userID := uuid.New()
-	if _, err := mr.SAdd(cartKey(userID), "room-101|2026-10-05"); err != nil {
-		t.Fatal(err)
-	}
-
-	if d := mustTTL(t, r, userID); d != 0 {
-		t.Fatalf("TTL = %s, want 0", d)
 	}
 }
 
@@ -283,21 +164,14 @@ func TestCarts_RedisErrors(t *testing.T) {
 	r, mr := newTestCarts(t)
 	ctx := context.Background()
 	userID := uuid.New()
+	it := item("room-101", "2026-10-05")
 	mr.SetError("ERR boom")
 
-	if _, err := r.GetCart(ctx, userID); err == nil {
-		t.Error("Get: want error")
-	}
-	if err := r.SaveCart(ctx, cartWith(userID, item("room-101", "2026-10-05"))); err == nil {
-		t.Error("Save: want error")
-	}
-	if err := r.RemoveCartItem(ctx, userID, item("room-101", "2026-10-05")); err == nil || errors.Is(err, cart.ErrItemNotFound) {
-		t.Errorf("RemoveItem: err = %v, want Redis error", err)
-	}
-	if err := r.DeleteCart(ctx, userID); err == nil {
-		t.Error("DeleteCart: want error")
-	}
-	if _, err := r.GetCartTTL(ctx, userID); err == nil {
-		t.Error("TTL: want error")
-	}
+	_, err := r.GetCart(ctx, userID)
+	require.Error(t, err, "GetCart")
+	require.Error(t, r.AddCartItem(ctx, userID, it), "AddCartItem")
+	err = r.RemoveCartItem(ctx, userID, it)
+	require.Error(t, err, "RemoveCartItem")
+	require.NotErrorIs(t, err, cart.ErrItemNotFound, "RemoveCartItem")
+	require.Error(t, r.DeleteCart(ctx, userID), "DeleteCart")
 }

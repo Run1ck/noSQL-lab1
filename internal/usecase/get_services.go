@@ -23,12 +23,7 @@ func (u *UseCase) GetServices(ctx context.Context) (dto.GetServicesOutput, error
 			continue
 		}
 
-		output.Services = append(output.Services, dto.Service{
-			ID:     s.ID,
-			Name:   s.Name,
-			Kind:   string(s.Kind),
-			Active: s.Active,
-		})
+		output.Services = append(output.Services, toService(s))
 	}
 
 	return output, nil

@@ -67,7 +67,7 @@
 - `internal/domain/**`
 - `internal/auth/auth.go`
 - `pkg/ratelimit/ratelimit.go`
-- `pkg/httpx/{json,errors}.go` (`module.go` больше не используется — маршруты в `router.go`)
+- `pkg/httpx/{json,errors,middlewares}.go`
 - `internal/usecase/usecase.go` — интерфейсы `Postgres`, `Redis`, `UseCase`, `New`: каждый дописывает свои методы
 - `internal/controller/http/router.go`, `internal/controller/http/v1/v1.go` — каждый дописывает свои маршруты
 - `.mockery.yml`, `internal/usecase/mocks/` (генерируется `make generate`)

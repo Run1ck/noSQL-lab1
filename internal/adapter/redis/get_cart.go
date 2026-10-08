@@ -6,24 +6,41 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"booking/internal/domain/cart"
 	"booking/internal/domain/service"
 )
 
-// GetCart отдаёт корзину пользователя; нет ключа — пустая корзина, не ошибка.
+// GetCart отдаёт корзину пользователя вместе с остатком TTL; нет ключа — пустая
+// корзина с TTL 0, не ошибка. SMEMBERS и PTTL идут в одной транзакции
+// MULTI/EXEC: корзина не истечёт между чтением позиций и TTL.
 func (r *Redis) GetCart(ctx context.Context, userID uuid.UUID) (*cart.Cart, error) {
-	members, err := r.redis.SMembers(ctx, cartKey(userID)).Result()
+	key := cartKey(userID)
+
+	var (
+		members *redis.StringSliceCmd
+		ttl     *redis.DurationCmd
+	)
+
+	_, err := r.redis.TxPipelined(ctx, func(p redis.Pipeliner) error {
+		members = p.SMembers(ctx, key)
+		ttl = p.PTTL(ctx, key)
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("r.redis.SMembers: %w", err)
+		return nil, fmt.Errorf("r.redis.TxPipelined: %w", err)
 	}
 
 	c := &cart.Cart{
 		UserID: userID,
-		Items:  make(map[cart.Item]struct{}, len(members)),
+		Items:  make(map[cart.Item]struct{}, len(members.Val())),
+		// -2 — ключа нет, -1 — ключ без TTL: такой корзину не пишем.
+		TTL: max(ttl.Val(), 0),
 	}
 
-	for _, m := range members {
+	for _, m := range members.Val() {
 		item, err := decodeItem(m)
 		if err != nil {
 			return nil, fmt.Errorf("decodeItem: %w", err)

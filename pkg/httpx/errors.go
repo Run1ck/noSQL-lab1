@@ -53,7 +53,6 @@ var errorMap = []struct {
 	{service.ErrInvalidRange, http.StatusBadRequest, "bad_request"},
 	{service.ErrNotFound, http.StatusNotFound, "service_not_found"},
 
-	{cart.ErrInvalidUUID, http.StatusBadRequest, "invalid_id"},
 	{cart.ErrItemNotFound, http.StatusNotFound, "item_not_found"},
 	{cart.ErrPastDate, http.StatusUnprocessableEntity, "past_date"},
 	{cart.ErrServiceUnavailable, http.StatusUnprocessableEntity, "service_unavailable"},

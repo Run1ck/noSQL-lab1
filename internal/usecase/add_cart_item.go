@@ -45,24 +45,15 @@ func (u *UseCase) AddCartItem(ctx context.Context, input dto.AddCartItemInput) (
 		}
 	}
 
-	// Get → Add → Save не атомарно: два параллельных добавления могут потерять
-	// позицию — гонка принята.
+	err = u.redis.AddCartItem(ctx, input.UserID, cart.Item{ServiceID: svc.ID, Date: date})
+	if err != nil {
+		return output, fmt.Errorf("u.redis.AddCartItem: %w", err)
+	}
+
 	c, err := u.redis.GetCart(ctx, input.UserID)
 	if err != nil {
 		return output, fmt.Errorf("u.redis.GetCart: %w", err)
 	}
 
-	c.AddItem(cart.Item{ServiceID: svc.ID, Date: date})
-
-	err = u.redis.SaveCart(ctx, c)
-	if err != nil {
-		return output, fmt.Errorf("u.redis.SaveCart: %w", err)
-	}
-
-	output, err = u.cart(ctx, input.UserID)
-	if err != nil {
-		return output, fmt.Errorf("u.cart: %w", err)
-	}
-
-	return output, nil
+	return toCart(c), nil
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"booking/internal/domain/booking"
@@ -27,6 +26,8 @@ func Test_AddCartItem_Success(t *testing.T) {
 	userID := uuid.New()
 	today := day(0) // сегодня — можно
 	item := cart.Item{ServiceID: "room-101", Date: today}
+	c := newCart(userID, item)
+	c.TTL = 30 * time.Minute
 
 	// Настраиваем поведение Postgres: в этот день занята другая услуга
 	postgres := new(mocks.Postgres)
@@ -35,15 +36,9 @@ func Test_AddCartItem_Success(t *testing.T) {
 
 	// Настраиваем поведение Redis
 	redis := new(mocks.Redis)
-	redis.On("GetCart", Any, userID).Return(newCart(userID), nil).Once()
-	redis.On("SaveCart", Any, mock.MatchedBy(func(c *cart.Cart) bool {
-		_, ok := c.Items[item]
-
-		return ok && len(c.Items) == 1
-	})).Return(nil)
-	redis.On("GetCart", Any, userID).Return(newCart(userID, item), nil).Once()
-	redis.On("GetCartTTL", Any, userID).Return(30*time.Minute, nil)
-	defer redis.AssertCalled(t, "SaveCart", Any, Any)
+	redis.On("AddCartItem", Any, userID, item).Return(nil)
+	redis.On("GetCart", Any, userID).Return(c, nil)
+	defer redis.AssertCalled(t, "AddCartItem", Any, userID, item)
 
 	// Собираем UseCase
 	u := usecase.New(postgres, redis, nil, nil)

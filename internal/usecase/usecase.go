@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -19,10 +18,9 @@ import (
 
 type Redis interface {
 	GetCart(ctx context.Context, userID uuid.UUID) (*cart.Cart, error)
-	SaveCart(ctx context.Context, c *cart.Cart) error
+	AddCartItem(ctx context.Context, userID uuid.UUID, item cart.Item) error
 	RemoveCartItem(ctx context.Context, userID uuid.UUID, item cart.Item) error
 	DeleteCart(ctx context.Context, userID uuid.UUID) error
-	GetCartTTL(ctx context.Context, userID uuid.UUID) (time.Duration, error)
 }
 
 type Postgres interface {

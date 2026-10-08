@@ -32,11 +32,11 @@ func Test_GetCart_Success(t *testing.T) {
 		cart.Item{ServiceID: "room-101", Date: date("2026-10-05")},
 		cart.Item{ServiceID: "lab-1", Date: date("2026-10-06")},
 	)
+	c.TTL = 1799500 * time.Millisecond
 
 	// Настраиваем поведение Redis
 	redis := new(mocks.Redis)
 	redis.On("GetCart", Any, userID).Return(c, nil)
-	redis.On("GetCartTTL", Any, userID).Return(1799500*time.Millisecond, nil)
 	defer redis.AssertCalled(t, "GetCart", Any, userID)
 
 	// Собираем UseCase
@@ -65,7 +65,6 @@ func Test_GetCart_Empty(t *testing.T) {
 	// Настраиваем поведение Redis: корзины нет
 	redis := new(mocks.Redis)
 	redis.On("GetCart", Any, userID).Return(newCart(userID), nil)
-	redis.On("GetCartTTL", Any, userID).Return(time.Duration(0), nil)
 
 	// Собираем UseCase
 	u := usecase.New(nil, redis, nil, nil)
