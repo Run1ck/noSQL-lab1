@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -17,78 +16,91 @@ import (
 	"booking/internal/adapter/repository"
 	"booking/internal/auth"
 	controllerhttp "booking/internal/controller/http"
+	"booking/internal/dto"
 	"booking/internal/usecase"
 	"booking/pkg/httpx"
 	"booking/pkg/postgres"
 	"booking/pkg/ratelimit"
 	"booking/pkg/redis"
+	"booking/web"
 )
 
-func Run(ctx context.Context, c config.Config) error {
-	// Redis
-	redisClient, err := redis.New(ctx, c.RedisAddr)
-	if err != nil {
-		return fmt.Errorf("redis.New: %w", err)
-	}
+const (
+	startTimeout    = 10 * time.Second
+	shutdownTimeout = 10 * time.Second
+)
 
-	// Postgres
-	pgPool, err := postgres.New(ctx, c.PostgresDSN)
+func Run(cfg config.Config) error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	startCtx, cancel := context.WithTimeout(ctx, startTimeout)
+	defer cancel()
+
+	pool, err := postgres.New(startCtx, cfg.PostgresDSN)
 	if err != nil {
 		return fmt.Errorf("postgres.New: %w", err)
 	}
+	defer pool.Close()
 
-	var pg usecase.Postgres = adapterpostgres.New(pgPool)
-	if c.CacheEnabled {
-		pg = repository.New(redisClient, pg, c.CacheTTL)
+	client, err := redis.New(startCtx, cfg.RedisAddr)
+	if err != nil {
+		return fmt.Errorf("redis.New: %w", err)
+	}
+	defer client.Close()
+
+	var pg usecase.Postgres = adapterpostgres.New(pool)
+	if cfg.CacheEnabled {
+		pg = repository.New(client, pg, cfg.CacheTTL)
+	}
+	tokens := auth.NewJWT(cfg.JWTSecret, cfg.JWTTTL)
+	apiLimit := ratelimit.NewRedis(client, "rl:api", cfg.RateLimit, cfg.RateWindow)
+	banLimit := ratelimit.NewBan(client, cfg.BanLimit, cfg.BanWindow, cfg.BanTTL)
+
+	uc := usecase.New(pg, adapterredis.New(client, cfg.CartTTL), tokens, banLimit)
+
+	admin, err := uc.EnsureAdmin(startCtx, dto.EnsureAdminInput{Login: cfg.AdminLogin, Password: cfg.AdminPassword})
+	if err != nil {
+		return fmt.Errorf("uc.EnsureAdmin: %w", err)
+	}
+	if admin.Created {
+		slog.Info("admin created", "login", cfg.AdminLogin)
 	}
 
-	// UseCase
-	tokens := auth.NewJWT(c.JWTSecret, c.JWTTTL)
-	ban := ratelimit.NewBan(redisClient, c.BanLimit, c.BanWindow, c.BanTTL)
-	uc := usecase.New(pg, adapterredis.New(redisClient, c.CartTTL), tokens, ban)
-
-	// HTTP
 	mux := http.NewServeMux()
 	controllerhttp.Router(mux, uc, httpx.NewMiddlewares(tokens))
+	mux.Handle("/", web.Handler())
 
-	// Лимит только на /api/*, статику UI не считаем.
-	apiLimit := ratelimit.NewRedis(redisClient, "rl:api", c.RateLimit, c.RateWindow)
-
-	httpServer := &http.Server{
-		Addr:              c.PORT,
+	srv := &http.Server{
+		Addr:              cfg.PORT,
 		Handler:           httpx.RateLimit(apiLimit, httpx.ClientIP)(mux),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
+	errCh := make(chan error, 1)
 	go func() {
-		err := httpServer.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("httpServer.ListenAndServe", "err", err)
-		}
+		slog.Info("http server started", "addr", cfg.PORT)
+		errCh <- srv.ListenAndServe()
 	}()
 
-	slog.Info("App started!", "addr", c.PORT, "cache", c.CacheEnabled)
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-	<-sig // wait signal
-
-	slog.Info("App got signal to stop")
-
-	// Controllers
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err = httpServer.Shutdown(shutdownCtx)
-	if err != nil {
-		slog.Error("httpServer.Shutdown", "err", err)
+	select {
+	case err := <-errCh:
+		if !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("srv.ListenAndServe: %w", err)
+		}
+	case <-ctx.Done():
+		slog.Info("shutting down")
 	}
 
-	// Adapters
-	_ = redisClient.Close()
-	pgPool.Close()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
 
-	slog.Info("App stopped!")
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("srv.Shutdown: %w", err)
+	}
 
 	return nil
 }

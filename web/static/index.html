@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Каталог · Booking</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header id="nav"></header>
+  <main class="container">
+    <div class="page-head">
+      <h1>Бронирование <span class="gradient-text">без очередей</span></h1>
+      <p>Выберите аудиторию, лабораторию или оборудование, отметьте свободные дни и отправьте заявку администратору.</p>
+    </div>
+    <div class="layout">
+      <div>
+        <section class="panel glass">
+          <h2>Каталог
+            <div class="chips" id="kind-filter">
+              <button class="chip active" data-kind="">Все</button>
+              <button class="chip" data-kind="room">Аудитории</button>
+              <button class="chip" data-kind="lab">Лаборатории</button>
+              <button class="chip" data-kind="equipment">Оборудование</button>
+            </div>
+          </h2>
+          <div class="grid-cards" id="services">
+            <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+          </div>
+        </section>
+        <section class="panel glass" id="schedule-panel">
+          <h2>Расписание
+            <div class="row">
+              <button class="btn sm icon-btn" id="prev-week" aria-label="Предыдущая неделя">‹</button>
+              <input class="input" type="date" id="start-date" style="width:auto">
+              <button class="btn sm icon-btn" id="next-week" aria-label="Следующая неделя">›</button>
+            </div>
+          </h2>
+          <div id="schedule"></div>
+        </section>
+      </div>
+      <aside class="panel glass sticky" id="cart-panel">
+        <h2>Корзина <span class="faint small" id="cart-count"></span></h2>
+        <div id="cart"></div>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer">noSQL lab · Postgres + Redis</footer>
+  <script type="module" src="/catalog.js"></script>
+</body>
+</html>

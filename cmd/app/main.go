@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log/slog"
 	"os"
 
@@ -10,14 +9,13 @@ import (
 )
 
 func main() {
-	c, err := config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("config.Load", "err", err)
 		os.Exit(1)
 	}
 
-	err = app.Run(context.Background(), c)
-	if err != nil {
+	if err := app.Run(cfg); err != nil {
 		slog.Error("app.Run", "err", err)
 		os.Exit(1)
 	}
