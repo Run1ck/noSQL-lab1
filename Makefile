@@ -1,4 +1,4 @@
-.PHONY: up down run test keys flush generate mockery-install
+.PHONY: up down run seed test keys flush generate mockery-install
 
 up:
 	docker compose -f deploy/compose.yaml up -d
@@ -8,6 +8,9 @@ down:
 
 run:
 	go run ./cmd/app
+
+seed:
+	go run ./cmd/seeder
 
 test:
 	go test ./... -race
