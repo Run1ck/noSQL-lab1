@@ -4,7 +4,6 @@ services:
     container_name: booking-redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     ports:
-      # Только localhost: пароля нет, наружу Redis не светим.
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro

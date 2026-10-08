@@ -20,7 +20,6 @@ func newTestBan(t *testing.T) (*Ban, *miniredis.Miniredis) {
 	return NewBan(rdb, testBanLimit, testBanWindow, testBanTTL), mr
 }
 
-// exhaust пропускает testBanLimit действий и проверяет, что следующее ставит бан.
 func exhaust(t *testing.T, b *Ban, key string) {
 	t.Helper()
 	for range testBanLimit {
@@ -98,7 +97,6 @@ func TestBan_WindowExpiresWithoutBan(t *testing.T) {
 	}
 }
 
-// Окно счётчика отсчитывается от первой заявки и не сдвигается следующими.
 func TestBan_WindowDoesNotSlide(t *testing.T) {
 	b, mr := newTestBan(t)
 
@@ -116,7 +114,6 @@ func TestBan_WindowDoesNotSlide(t *testing.T) {
 	}
 }
 
-// Счётчик без TTL получает TTL окна, а не копится вечно.
 func TestBan_HealsCounterWithoutTTL(t *testing.T) {
 	b, mr := newTestBan(t)
 	if err := mr.Set("rl:req:user", "1"); err != nil {
@@ -131,7 +128,6 @@ func TestBan_HealsCounterWithoutTTL(t *testing.T) {
 	}
 }
 
-// Длительности меньше миллисекунды: бан всё равно ставится (SET … PX 0 — ошибка).
 func TestBan_SubMillisecondDurations(t *testing.T) {
 	rdb, mr := newTestRedis(t)
 	b := NewBan(rdb, 1, 500*time.Microsecond, 500*time.Microsecond)
@@ -157,7 +153,6 @@ func TestBan_UsersAreIndependent(t *testing.T) {
 	}
 }
 
-// Бан без TTL не должен висеть вечно.
 func TestBan_HealsBanWithoutTTL(t *testing.T) {
 	b, mr := newTestBan(t)
 	if err := mr.Set("ban:user", "1"); err != nil {
