@@ -158,7 +158,6 @@ func TestCarts_RemoveItem(t *testing.T) {
 		t.Fatalf("TTL after RemoveItem = %s, want %s", d, testTTL)
 	}
 
-	// Последняя позиция: SET пустеет и пропадает вместе с ключом.
 	if err := r.RemoveCartItem(ctx, userID, b); err != nil {
 		t.Fatalf("RemoveItem last: %v", err)
 	}
@@ -183,7 +182,6 @@ func TestCarts_RemoveMissingItem(t *testing.T) {
 	if err := r.RemoveCartItem(ctx, userID, item("room-101", "2026-10-06")); !errors.Is(err, cart.ErrItemNotFound) {
 		t.Fatalf("RemoveItem of missing item: err = %v, want ErrItemNotFound", err)
 	}
-	// Неудачное удаление не должно продлевать корзину.
 	if d := mustTTL(t, r, userID); d != testTTL-10*time.Minute {
 		t.Fatalf("TTL = %s, want %s", d, testTTL-10*time.Minute)
 	}
@@ -265,7 +263,6 @@ func TestCarts_SaveRejectsInvalidItem(t *testing.T) {
 	}
 }
 
-// Ключ без TTL корзины не пишут, но TTL() должен отдать 0, а не -1ns.
 func TestCarts_TTLOfKeyWithoutExpiry(t *testing.T) {
 	r, mr := newTestCarts(t)
 	userID := uuid.New()
@@ -278,7 +275,6 @@ func TestCarts_TTLOfKeyWithoutExpiry(t *testing.T) {
 	}
 }
 
-// Ошибка Redis — это ошибка (500), а не пустая корзина или 404.
 func TestCarts_RedisErrors(t *testing.T) {
 	r, mr := newTestCarts(t)
 	ctx := context.Background()

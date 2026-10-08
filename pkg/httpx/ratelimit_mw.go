@@ -11,17 +11,8 @@ import (
 	"time"
 )
 
-// warnEvery — как часто писать в лог, что лимит недоступен: при отказе Redis
-// под нагрузкой строка на каждый запрос — это тысячи строк в секунду.
 const warnEvery = 10 * time.Second
 
-// RateLimit ограничивает частоту запросов к /api/*; ключ лимита — key(r), в main
-// это ClientIP. Остальные пути (статика UI) не считаются: main оборачивает весь
-// mux, поэтому фильтр по пути — здесь.
-//
-// Ответ несёт X-RateLimit-Limit и X-RateLimit-Remaining; сверх лимита — 429
-// rate_limited с Retry-After. Если хранилище лимита недоступно, запрос
-// пропускается (fail-open), а ошибка пишется в лог не чаще раза в warnEvery.
 func RateLimit(l ratelimit.Limiter, key func(*http.Request) string) func(http.Handler) http.Handler {
 	var warn throttledWarn
 	return func(next http.Handler) http.Handler {
@@ -33,7 +24,6 @@ func RateLimit(l ratelimit.Limiter, key func(*http.Request) string) func(http.Ha
 
 			d, err := l.Allow(r.Context(), key(r))
 			if err != nil {
-				// Клиент ушёл, пока ждали Redis, — это не отказ хранилища.
 				if r.Context().Err() == nil {
 					warn.log(err)
 				}
@@ -52,10 +42,8 @@ func RateLimit(l ratelimit.Limiter, key func(*http.Request) string) func(http.Ha
 	}
 }
 
-// throttledWarn пишет в лог не чаще раза в warnEvery и сообщает, сколько
-// записей пропущено с прошлого раза.
 type throttledWarn struct {
-	last       atomic.Int64 // UnixNano последней записи
+	last       atomic.Int64
 	suppressed atomic.Int64
 }
 
@@ -70,9 +58,6 @@ func (t *throttledWarn) log(err error) {
 		"err", err, "suppressed", t.suppressed.Swap(0))
 }
 
-// ClientIP — IP клиента из адреса TCP-соединения. X-Forwarded-For и похожие
-// заголовки не читаем: их присылает сам клиент, и подменой обходится лимит.
-// За обратным прокси все клиенты получили бы IP прокси — у нас его нет.
 func ClientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

@@ -10,13 +10,6 @@ import (
 	"booking/internal/domain/cart"
 )
 
-// removeItemScript удаляет позицию и продлевает TTL одной атомарной операцией.
-//
-//	KEYS[1] — ключ корзины, cart:{userID}
-//	ARGV[1] — позиция, "serviceID|YYYY-MM-DD"
-//	ARGV[2] — TTL корзины в миллисекундах
-//
-// Возвращает 1, если позиция удалена; 0, если её не было — тогда TTL не трогает.
 var removeItemScript = redis.NewScript(`
 if redis.call('SREM', KEYS[1], ARGV[1]) == 0 then
 	return 0

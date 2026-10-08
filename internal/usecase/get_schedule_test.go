@@ -24,7 +24,6 @@ func date(s string) service.Date {
 }
 
 func Test_GetSchedule_Success(t *testing.T) {
-	// Настраиваем поведение Postgres
 	postgres := new(mocks.Postgres)
 	postgres.On("GetBookings", Any, date("2026-10-05")).Return([]booking.Booking{
 		{ServiceID: "room-101", Date: date("2026-10-05"), RequestID: 1},
@@ -32,10 +31,9 @@ func Test_GetSchedule_Success(t *testing.T) {
 	}, nil)
 	postgres.On("GetBookings", Any, date("2026-10-06")).Return(nil, nil)
 
-	// Собираем UseCase
 	u := usecase.New(postgres, nil, nil, nil)
 
-	{ // Сам тест: занятые — по возрастанию, у свободного дня пустой срез
+	{
 		input := dto.GetScheduleInput{From: "2026-10-05", To: "2026-10-06"}
 		output := dto.GetScheduleOutput{Days: []dto.Day{
 			{Date: "2026-10-05", Booked: []string{"lab-1", "room-101"}},
@@ -49,11 +47,9 @@ func Test_GetSchedule_Success(t *testing.T) {
 }
 
 func Test_GetSchedule_Ranges(t *testing.T) {
-	// Настраиваем поведение Postgres: все дни свободны
 	postgres := new(mocks.Postgres)
 	postgres.On("GetBookings", Any, Any).Return(nil, nil)
 
-	// Собираем UseCase
 	u := usecase.New(postgres, nil, nil, nil)
 
 	for _, tc := range []struct {
@@ -63,8 +59,8 @@ func Test_GetSchedule_Ranges(t *testing.T) {
 	}{
 		{"2026-10-05", "2026-10-05", 1, "2026-10-05", "2026-10-05"},
 		{"2026-10-01", "2026-10-31", 31, "2026-10-01", "2026-10-31"},
-		{"2028-02-28", "2028-03-01", 3, "2028-02-28", "2028-03-01"}, // 29 февраля
-		{"2026-03-28", "2026-03-30", 3, "2026-03-28", "2026-03-30"}, // перевод часов
+		{"2028-02-28", "2028-03-01", 3, "2028-02-28", "2028-03-01"},
+		{"2026-03-28", "2026-03-30", 3, "2026-03-28", "2026-03-30"},
 	} {
 		actual, err := u.GetSchedule(context.Background(), dto.GetScheduleInput{From: tc.from, To: tc.to})
 		require.NoError(t, err)
@@ -75,7 +71,6 @@ func Test_GetSchedule_Ranges(t *testing.T) {
 }
 
 func Test_GetSchedule_InvalidInput(t *testing.T) {
-	// Собираем UseCase: до Postgres дело не доходит
 	u := usecase.New(nil, nil, nil, nil)
 
 	for _, tc := range []struct {
@@ -84,8 +79,8 @@ func Test_GetSchedule_InvalidInput(t *testing.T) {
 	}{
 		{"2026-02-30", "2026-03-01", service.ErrInvalidDate},
 		{"2026-10-05", "", service.ErrInvalidDate},
-		{"2026-10-07", "2026-10-05", service.ErrInvalidRange}, // from позже to
-		{"2026-10-01", "2026-11-01", service.ErrInvalidRange}, // 32 дня
+		{"2026-10-07", "2026-10-05", service.ErrInvalidRange},
+		{"2026-10-01", "2026-11-01", service.ErrInvalidRange},
 	} {
 		actual, err := u.GetSchedule(context.Background(), dto.GetScheduleInput{From: tc.from, To: tc.to})
 		require.ErrorIs(t, err, tc.err)
@@ -94,17 +89,14 @@ func Test_GetSchedule_InvalidInput(t *testing.T) {
 }
 
 func Test_GetSchedule_Error(t *testing.T) {
-	// Данные для поведения
 	errDB := errors.New("db down")
 
-	// Настраиваем поведение Postgres
 	postgres := new(mocks.Postgres)
 	postgres.On("GetBookings", Any, Any).Return(nil, errDB)
 
-	// Собираем UseCase
 	u := usecase.New(postgres, nil, nil, nil)
 
-	{ // Сам тест
+	{
 		_, err := u.GetSchedule(context.Background(), dto.GetScheduleInput{From: "2026-10-05", To: "2026-10-05"})
 		require.ErrorIs(t, err, errDB)
 	}

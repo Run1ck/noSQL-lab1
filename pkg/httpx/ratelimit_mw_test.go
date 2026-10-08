@@ -27,8 +27,6 @@ func (f *fakeLimiter) Allow(_ context.Context, key string) (ratelimit.Decision, 
 	return f.d, f.err
 }
 
-// serve прогоняет запрос через RateLimit(l, ClientIP) и сообщает, дошёл ли он
-// до обработчика.
 func serve(l ratelimit.Limiter, path, remoteAddr string) (*httptest.ResponseRecorder, bool) {
 	reached := false
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +108,6 @@ func TestRateLimit_Rejected(t *testing.T) {
 	}
 }
 
-// captureLog перенаправляет slog в буфер до конца теста.
 func captureLog(t *testing.T) *bytes.Buffer {
 	t.Helper()
 	var buf bytes.Buffer
@@ -138,13 +135,11 @@ func TestRateLimit_FailOpen(t *testing.T) {
 	if reached != 3 {
 		t.Fatalf("reached handler %d times, want 3", reached)
 	}
-	// Отказ Redis пишется в лог один раз, а не на каждый запрос.
 	if n := bytes.Count(logs.Bytes(), []byte("rate limit unavailable")); n != 1 {
 		t.Fatalf("logged %d times, want 1:\n%s", n, logs)
 	}
 }
 
-// Клиент ушёл, пока ждали Redis, — запрос пропускаем, но в лог как отказ не пишем.
 func TestRateLimit_FailOpenClientGone(t *testing.T) {
 	logs := captureLog(t)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -163,7 +158,6 @@ func TestRateLimit_FailOpenClientGone(t *testing.T) {
 	}
 }
 
-// Сквозной тест с настоящим лимитером на miniredis.
 func TestRateLimit_WithRedisLimiter(t *testing.T) {
 	mr := miniredis.RunT(t)
 	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})

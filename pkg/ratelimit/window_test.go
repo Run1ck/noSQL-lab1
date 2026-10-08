@@ -61,7 +61,6 @@ func TestFixedWindow_KeysAreIndependent(t *testing.T) {
 	}
 }
 
-// Счётчик без TTL (например, после ручного INCR) не должен блокировать навсегда.
 func TestFixedWindow_HealsCounterWithoutTTL(t *testing.T) {
 	rdb, mr := newTestRedis(t)
 	l := NewRedis(rdb, "rl:api", testLimit, testWindow)
@@ -98,7 +97,6 @@ func TestFixedWindow_RedisError(t *testing.T) {
 	}
 }
 
-// В последнюю миллисекунду окна PTTL отдаёт 0 — отказ всё равно с RetryAfter > 0.
 func TestFixedWindow_RejectionInLastMillisecond(t *testing.T) {
 	rdb, mr := newTestRedis(t)
 	l := NewRedis(rdb, "rl:api", testLimit, testWindow)
@@ -113,7 +111,6 @@ func TestFixedWindow_RejectionInLastMillisecond(t *testing.T) {
 	}
 }
 
-// Окно меньше миллисекунды не выключает лимит: PEXPIRE 0 удалил бы счётчик.
 func TestFixedWindow_SubMillisecondWindow(t *testing.T) {
 	rdb, mr := newTestRedis(t)
 	l := NewRedis(rdb, "rl:api", 1, 500*time.Microsecond)

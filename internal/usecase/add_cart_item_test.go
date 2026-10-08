@@ -17,23 +17,19 @@ import (
 	"booking/internal/usecase/mocks"
 )
 
-// day — дата со сдвигом от сегодня: «сегодня» use case берёт из time.Now().
 func day(offset int) service.Date {
 	return service.DateOf(time.Now().AddDate(0, 0, offset))
 }
 
 func Test_AddCartItem_Success(t *testing.T) {
-	// Данные для поведения
 	userID := uuid.New()
-	today := day(0) // сегодня — можно
+	today := day(0)
 	item := cart.Item{ServiceID: "room-101", Date: today}
 
-	// Настраиваем поведение Postgres: в этот день занята другая услуга
 	postgres := new(mocks.Postgres)
 	postgres.On("GetService", Any, "room-101").Return(&service.Service{ID: "room-101", Active: true}, nil)
 	postgres.On("GetBookings", Any, today).Return([]booking.Booking{{ServiceID: "lab-1", Date: today}}, nil)
 
-	// Настраиваем поведение Redis
 	redis := new(mocks.Redis)
 	redis.On("GetCart", Any, userID).Return(newCart(userID), nil).Once()
 	redis.On("SaveCart", Any, mock.MatchedBy(func(c *cart.Cart) bool {
@@ -45,10 +41,9 @@ func Test_AddCartItem_Success(t *testing.T) {
 	redis.On("GetCartTTL", Any, userID).Return(30*time.Minute, nil)
 	defer redis.AssertCalled(t, "SaveCart", Any, Any)
 
-	// Собираем UseCase
 	u := usecase.New(postgres, redis, nil, nil)
 
-	{ // Сам тест
+	{
 		input := dto.AddCartItemInput{UserID: userID, ServiceID: "room-101", Date: today.String()}
 		output := dto.CartOutput{
 			Items:     []dto.CartItem{{ServiceID: "room-101", Date: today.String()}},
@@ -107,7 +102,6 @@ func Test_AddCartItem_Rejected(t *testing.T) {
 			err:     cart.ErrSlotBooked,
 		},
 	} {
-		// Настраиваем поведение Postgres
 		postgres := new(mocks.Postgres)
 		if tc.service != nil {
 			postgres.On("GetService", Any, tc.input.ServiceID).Return(tc.service, nil)
@@ -116,10 +110,9 @@ func Test_AddCartItem_Rejected(t *testing.T) {
 		}
 		postgres.On("GetBookings", Any, Any).Return(tc.booked, nil)
 
-		// Собираем UseCase: Redis без ожиданий — корзину трогать нельзя
 		u := usecase.New(postgres, new(mocks.Redis), nil, nil)
 
-		{ // Сам тест
+		{
 			actual, err := u.AddCartItem(context.Background(), tc.input)
 			require.ErrorIs(t, err, tc.err, tc.name)
 			require.Equal(t, dto.CartOutput{}, actual, tc.name)

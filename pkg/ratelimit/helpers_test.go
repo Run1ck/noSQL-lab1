@@ -27,8 +27,6 @@ func mustAllow(t *testing.T, l Limiter, key string) Decision {
 	return d
 }
 
-// allowConcurrently делает n параллельных Allow по одному ключу и возвращает,
-// сколько из них пропущено.
 func allowConcurrently(t *testing.T, l Limiter, key string, n int) int {
 	t.Helper()
 	var (

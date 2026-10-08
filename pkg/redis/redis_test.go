@@ -21,8 +21,6 @@ func TestNew(t *testing.T) {
 	_ = rdb.Close()
 }
 
-// Недоступный Redis — быстрая ошибка, а не секунды попыток подключения:
-// на тех же настройках клиента работает fail-open лимита API.
 func TestNew_UnreachableFailsFast(t *testing.T) {
 	start := time.Now()
 	if _, err := New(context.Background(), "127.0.0.1:1"); err == nil {
@@ -33,7 +31,6 @@ func TestNew_UnreachableFailsFast(t *testing.T) {
 	}
 }
 
-// Сервер принял соединение и молчит — ждём ReadTimeout, а не дефолтные 5 с.
 func TestNew_SilentServerTimesOut(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -62,8 +59,6 @@ func TestNew_SilentServerTimesOut(t *testing.T) {
 	}
 }
 
-// Ответ опоздал дольше ReadTimeout — команда не повторяется: Redis её уже
-// выполнил, и повтор засчитал бы действие дважды.
 func TestNew_NoRetryAfterReadTimeout(t *testing.T) {
 	mr := miniredis.RunT(t)
 	var stall atomic.Bool
@@ -84,9 +79,6 @@ func TestNew_NoRetryAfterReadTimeout(t *testing.T) {
 	}
 }
 
-// delayingProxy проксирует TCP до addr. Если stall == true, следующий ответ
-// сервера придерживается на delay, а stall сбрасывается — как короткое
-// подвисание Redis: повтор по новому соединению прошёл бы без задержки.
 func delayingProxy(t *testing.T, addr string, stall *atomic.Bool, delay time.Duration) string {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")

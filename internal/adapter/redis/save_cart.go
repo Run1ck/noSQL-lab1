@@ -9,8 +9,6 @@ import (
 	"booking/internal/domain/cart"
 )
 
-// SaveCart перезаписывает корзину целиком: DEL, SADD и PEXPIRE в одной
-// транзакции MULTI/EXEC, чтобы ключ не остался без TTL. Пустая корзина удаляется.
 func (r *Redis) SaveCart(ctx context.Context, c *cart.Cart) error {
 	if c.IsEmpty() {
 		return r.DeleteCart(ctx, c.UserID)
@@ -19,7 +17,6 @@ func (r *Redis) SaveCart(ctx context.Context, c *cart.Cart) error {
 	members := make([]any, 0, len(c.Items))
 
 	for item := range c.Items {
-		// Битая позиция не прочитается обратно, и GetCart будет падать до конца TTL.
 		if item.ServiceID == "" || !item.Date.IsValid() {
 			return fmt.Errorf("invalid cart item %+v", item)
 		}

@@ -9,8 +9,6 @@ import (
 
 const maxBodyBytes = 1 << 20
 
-// ErrBadRequest — некорректный запрос: битый JSON, лишние поля, неверный
-// параметр пути. Обработчики оборачивают его: fmt.Errorf("%w: ...", ErrBadRequest).
 var ErrBadRequest = errors.New("bad request")
 
 func WriteJSON(w http.ResponseWriter, status int, v any) {
@@ -21,8 +19,6 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-// DecodeJSON читает тело запроса в dst; неизвестные поля и тело больше
-// 1 МБ — ErrBadRequest.
 func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes))
 	dec.DisallowUnknownFields()

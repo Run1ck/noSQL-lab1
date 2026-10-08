@@ -10,9 +10,6 @@ import (
 	"booking/internal/dto"
 )
 
-// AddCartItem — проверки в порядке кодов ошибок контракта: дата, услуга есть,
-// активна, день не раньше сегодняшнего, не занят бронью этой услуги. Повторное
-// добавление — не ошибка, только продлевает TTL.
 func (u *UseCase) AddCartItem(ctx context.Context, input dto.AddCartItemInput) (dto.CartOutput, error) {
 	var output dto.CartOutput
 
@@ -45,8 +42,6 @@ func (u *UseCase) AddCartItem(ctx context.Context, input dto.AddCartItemInput) (
 		}
 	}
 
-	// Get → Add → Save не атомарно: два параллельных добавления могут потерять
-	// позицию — гонка принята.
 	c, err := u.redis.GetCart(ctx, input.UserID)
 	if err != nil {
 		return output, fmt.Errorf("u.redis.GetCart: %w", err)

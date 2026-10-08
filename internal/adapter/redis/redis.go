@@ -9,9 +9,6 @@ import (
 	"booking/internal/domain/cart"
 )
 
-// Корзина — SET cart:{userID} из позиций "serviceID|YYYY-MM-DD" с одним TTL на
-// всю корзину. Пустой SET Redis удаляет сам: «корзины нет» и «корзина пуста»
-// неразличимы.
 const cartPrefix = "cart:"
 
 type Redis struct {

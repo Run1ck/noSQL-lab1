@@ -13,7 +13,6 @@ type CartItem struct {
 	Date      string `json:"date"`
 }
 
-// CartOutput — ответ всех use case'ов корзины.
 type CartOutput struct {
 	Items     []CartItem `json:"items"`
 	ExpiresIn int        `json:"expires_in"`

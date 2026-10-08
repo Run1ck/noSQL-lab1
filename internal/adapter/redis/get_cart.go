@@ -11,7 +11,6 @@ import (
 	"booking/internal/domain/service"
 )
 
-// GetCart отдаёт корзину пользователя; нет ключа — пустая корзина, не ошибка.
 func (r *Redis) GetCart(ctx context.Context, userID uuid.UUID) (*cart.Cart, error) {
 	members, err := r.redis.SMembers(ctx, cartKey(userID)).Result()
 	if err != nil {
@@ -35,7 +34,6 @@ func (r *Redis) GetCart(ctx context.Context, userID uuid.UUID) (*cart.Cart, erro
 	return c, nil
 }
 
-// decodeItem режет по последнему '|': в дате его нет, а в ID услуги может быть.
 func decodeItem(s string) (cart.Item, error) {
 	i := strings.LastIndexByte(s, '|')
 	if i < 0 {
@@ -44,7 +42,6 @@ func decodeItem(s string) (cart.Item, error) {
 
 	date, err := service.ParseDate(s[i+1:])
 	if err != nil {
-		// %v, а не %w: битые данные в Redis — это 500, а не 400 invalid_date.
 		return cart.Item{}, fmt.Errorf("bad cart item %q: %v", s, err)
 	}
 

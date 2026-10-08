@@ -23,8 +23,6 @@ func (u *UseCase) GetCart(ctx context.Context, input dto.GetCartInput) (dto.Cart
 	return output, nil
 }
 
-// cart — корзина пользователя: позиции по дате, затем по ID услуги, и секунды
-// до истечения с округлением вверх (живая корзина не покажет 0).
 func (u *UseCase) cart(ctx context.Context, userID uuid.UUID) (dto.CartOutput, error) {
 	var output dto.CartOutput
 
