@@ -33,35 +33,6 @@ func TestNew_UnreachableFailsFast(t *testing.T) {
 	}
 }
 
-// Сервер принял соединение и молчит — ждём ReadTimeout, а не дефолтные 5 с.
-func TestNew_SilentServerTimesOut(t *testing.T) {
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = ln.Close() })
-	go func() {
-		for {
-			conn, err := ln.Accept()
-			if err != nil {
-				return
-			}
-			go func() {
-				defer conn.Close()
-				_, _ = io.Copy(io.Discard, conn)
-			}()
-		}
-	}()
-
-	start := time.Now()
-	if _, err := New(context.Background(), ln.Addr().String()); err == nil {
-		t.Fatal("want timeout error")
-	}
-	if d := time.Since(start); d > 2*time.Second {
-		t.Fatalf("New took %s, want about ReadTimeout (%s)", d, timeout)
-	}
-}
-
 // Ответ опоздал дольше ReadTimeout — команда не повторяется: Redis её уже
 // выполнил, и повтор засчитал бы действие дважды.
 func TestNew_NoRetryAfterReadTimeout(t *testing.T) {

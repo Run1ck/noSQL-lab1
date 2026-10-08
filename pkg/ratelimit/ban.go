@@ -22,19 +22,15 @@ import (
 // вместе с этим), и {-1, ttl} при отказе (ttl — сколько миллисекунд осталось
 // до конца бана). Пока висит бан, действия не считаются. Действие сверх лимита
 // уже отклоняется и ставит бан, а счётчик удаляется: после бана счёт с нуля,
-// даже если окно длиннее бана. Ключам без TTL TTL ставится заново.
+// даже если окно длиннее бана.
 var banScript = redis.NewScript(`
 local ban = redis.call('PTTL', KEYS[2])
-if ban == -1 then
-	redis.call('PEXPIRE', KEYS[2], ARGV[3])
-	ban = tonumber(ARGV[3])
-end
 if ban > 0 then
 	return {-1, ban}
 end
 
 local n = redis.call('INCR', KEYS[1])
-if redis.call('PTTL', KEYS[1]) == -1 then
+if n == 1 then
 	redis.call('PEXPIRE', KEYS[1], ARGV[2])
 end
 if n > tonumber(ARGV[1]) then
@@ -56,7 +52,7 @@ type Ban struct {
 
 // NewBan возвращает бан с ключами rl:req:{key} и ban:{key}.
 func NewBan(rdb *redis.Client, limit int, window, ttl time.Duration) *Ban {
-	return &Ban{rdb: rdb, limit: limit, window: ceilMillis(window), ttl: ceilMillis(ttl)}
+	return &Ban{rdb: rdb, limit: limit, window: window, ttl: ttl}
 }
 
 func (b *Ban) Allow(ctx context.Context, key string) (Decision, error) {

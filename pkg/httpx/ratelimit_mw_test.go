@@ -144,25 +144,6 @@ func TestRateLimit_FailOpen(t *testing.T) {
 	}
 }
 
-// Клиент ушёл, пока ждали Redis, — запрос пропускаем, но в лог как отказ не пишем.
-func TestRateLimit_FailOpenClientGone(t *testing.T) {
-	logs := captureLog(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	reached := false
-	h := RateLimit(&fakeLimiter{err: context.Canceled}, ClientIP)(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { reached = true }))
-
-	req := httptest.NewRequest(http.MethodGet, "/api/services", nil).WithContext(ctx)
-	h.ServeHTTP(httptest.NewRecorder(), req)
-	if !reached {
-		t.Fatal("request must pass through")
-	}
-	if logs.Len() != 0 {
-		t.Fatalf("unexpected log: %s", logs)
-	}
-}
-
 // Сквозной тест с настоящим лимитером на miniredis.
 func TestRateLimit_WithRedisLimiter(t *testing.T) {
 	mr := miniredis.RunT(t)

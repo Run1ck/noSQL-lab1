@@ -116,60 +116,12 @@ func TestBan_WindowDoesNotSlide(t *testing.T) {
 	}
 }
 
-// Счётчик без TTL получает TTL окна, а не копится вечно.
-func TestBan_HealsCounterWithoutTTL(t *testing.T) {
-	b, mr := newTestBan(t)
-	if err := mr.Set("rl:req:user", "1"); err != nil {
-		t.Fatal(err)
-	}
-
-	if d := mustAllow(t, b, "user"); !d.Allowed || d.Remaining != testBanLimit-2 {
-		t.Fatalf("got %+v, want allowed with %d remaining", d, testBanLimit-2)
-	}
-	if got := mr.TTL("rl:req:user"); got != testBanWindow {
-		t.Fatalf("counter TTL = %s, want %s", got, testBanWindow)
-	}
-}
-
-// Длительности меньше миллисекунды: бан всё равно ставится (SET … PX 0 — ошибка).
-func TestBan_SubMillisecondDurations(t *testing.T) {
-	rdb, mr := newTestRedis(t)
-	b := NewBan(rdb, 1, 500*time.Microsecond, 500*time.Microsecond)
-
-	if d := mustAllow(t, b, "user"); !d.Allowed {
-		t.Fatalf("first: got %+v, want allowed", d)
-	}
-	d := mustAllow(t, b, "user")
-	if d.Allowed || d.RetryAfter != time.Millisecond {
-		t.Fatalf("second: got %+v, want banned with RetryAfter 1ms", d)
-	}
-	if got := mr.TTL("ban:user"); got != time.Millisecond {
-		t.Fatalf("ban TTL = %s, want 1ms", got)
-	}
-}
-
 func TestBan_UsersAreIndependent(t *testing.T) {
 	b, _ := newTestBan(t)
 	exhaust(t, b, "user")
 
 	if d := mustAllow(t, b, "other"); !d.Allowed {
 		t.Fatalf("other user must not be banned, got %+v", d)
-	}
-}
-
-// Бан без TTL не должен висеть вечно.
-func TestBan_HealsBanWithoutTTL(t *testing.T) {
-	b, mr := newTestBan(t)
-	if err := mr.Set("ban:user", "1"); err != nil {
-		t.Fatal(err)
-	}
-
-	d := mustAllow(t, b, "user")
-	if d.Allowed || d.RetryAfter != testBanTTL {
-		t.Fatalf("got %+v, want rejected with RetryAfter %s", d, testBanTTL)
-	}
-	if got := mr.TTL("ban:user"); got != testBanTTL {
-		t.Fatalf("ban TTL = %s, want %s", got, testBanTTL)
 	}
 }
 

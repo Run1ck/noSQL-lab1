@@ -39,7 +39,7 @@ type FixedWindow struct {
 
 // NewRedis возвращает лимит с ключами prefix:{key}, например rl:api:{ip}.
 func NewRedis(rdb *redis.Client, prefix string, limit int, window time.Duration) *FixedWindow {
-	return &FixedWindow{rdb: rdb, prefix: prefix, limit: limit, window: ceilMillis(window)}
+	return &FixedWindow{rdb: rdb, prefix: prefix, limit: limit, window: window}
 }
 
 func (l *FixedWindow) Allow(ctx context.Context, key string) (Decision, error) {
@@ -56,16 +56,7 @@ func (l *FixedWindow) Allow(ctx context.Context, key string) (Decision, error) {
 		Remaining: max(0, l.limit-n),
 	}
 	if !d.Allowed {
-		// В последнюю миллисекунду окна PTTL отдаёт 0, а отказ обязан
-		// нести RetryAfter > 0.
-		d.RetryAfter = max(ttl, time.Millisecond)
+		d.RetryAfter = ttl
 	}
 	return d, nil
-}
-
-// ceilMillis округляет d вверх до целых миллисекунд, минимум 1 мс. TTL в Redis
-// задаются в миллисекундах, а Milliseconds() обрезает: окно 500µs стало бы 0,
-// PEXPIRE 0 удаляет ключ (лимит выключен), а SET … PX 0 — ошибка.
-func ceilMillis(d time.Duration) time.Duration {
-	return max(time.Millisecond, (d + time.Millisecond - 1).Truncate(time.Millisecond))
 }

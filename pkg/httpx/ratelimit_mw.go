@@ -33,10 +33,7 @@ func RateLimit(l ratelimit.Limiter, key func(*http.Request) string) func(http.Ha
 
 			d, err := l.Allow(r.Context(), key(r))
 			if err != nil {
-				// Клиент ушёл, пока ждали Redis, — это не отказ хранилища.
-				if r.Context().Err() == nil {
-					warn.log(err)
-				}
+				warn.log(err)
 				next.ServeHTTP(w, r)
 				return
 			}
