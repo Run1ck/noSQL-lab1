@@ -2,3 +2,5 @@ deploy/.env
 .idea
 CLAUDE.md
 .DS_Store
+deploy/firestore-key.json
+*firebase-adminsdk*.json
