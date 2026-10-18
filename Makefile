@@ -1,4 +1,4 @@
-.PHONY: up up-dev down down-dev run run-dev keys flush
+.PHONY: up up-dev down down-dev run run-dev keys flush fs fs-flush
 
 DEV_COMPOSE = docker compose --env-file deploy/.env.dev -f deploy/devcompose.yaml
 
@@ -27,3 +27,9 @@ keys:
 
 flush:
 	docker exec booking-redis redis-cli flushall
+
+fs:
+	@ENV_FILE=deploy/.env.dev go run ./cmd/fsdump $(path)
+
+fs-flush:
+	curl -s -X DELETE 'http://127.0.0.1:8081/emulator/v1/projects/demo-booking/databases/(default)/documents'

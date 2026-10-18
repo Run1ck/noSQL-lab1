@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"cloud.google.com/go/firestore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"booking/internal/usecase"
 )
@@ -18,4 +20,8 @@ var _ usecase.Requests = (*Firestore)(nil)
 
 func New(client *firestore.Client) *Firestore {
 	return &Firestore{client: client}
+}
+
+func isCode(err error, code codes.Code) bool {
+	return status.Code(err) == code
 }
