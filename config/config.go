@@ -12,6 +12,11 @@ import (
 
 const defaultPostgresDSN = "postgres://booking:booking@127.0.0.1:5432/booking?sslmode=disable"
 
+const (
+	StoragePostgres  = "postgres"
+	StorageFirestore = "firestore"
+)
+
 type Config struct {
 	PORT string
 
@@ -30,6 +35,9 @@ type Config struct {
 
 	PostgresDSN string
 
+	Storage            string
+	FirestoreProjectID string
+
 	JWTSecret string
 	JWTTTL    time.Duration
 
@@ -41,20 +49,22 @@ func Load() (Config, error) {
 	_ = godotenv.Load(env("ENV_FILE", "deploy/.env"), ".env")
 
 	cfg := Config{
-		PORT:          env("PORT", ":8080"),
-		CartTTL:       envDuration("CART_TTL", 30*time.Minute),
-		CacheTTL:      envDuration("CACHE_TTL", 60*time.Second),
-		CacheEnabled:  envBool("CACHE_ENABLED", true),
-		RateLimit:     envInt("RATE_LIMIT", 60),
-		RateWindow:    envDuration("RATE_WINDOW", time.Minute),
-		BanLimit:      envInt("BAN_LIMIT", 5),
-		BanWindow:     envDuration("BAN_WINDOW", 10*time.Minute),
-		BanTTL:        envDuration("BAN_TTL", 15*time.Minute),
-		PostgresDSN:   env("POSTGRES_DSN", defaultPostgresDSN),
-		JWTSecret:     os.Getenv("JWT_SECRET"),
-		JWTTTL:        envDuration("JWT_TTL", 24*time.Hour),
-		AdminLogin:    env("ADMIN_LOGIN", "admin"),
-		AdminPassword: os.Getenv("ADMIN_PASSWORD"),
+		PORT:               env("PORT", ":8080"),
+		CartTTL:            envDuration("CART_TTL", 30*time.Minute),
+		CacheTTL:           envDuration("CACHE_TTL", 60*time.Second),
+		CacheEnabled:       envBool("CACHE_ENABLED", true),
+		RateLimit:          envInt("RATE_LIMIT", 60),
+		RateWindow:         envDuration("RATE_WINDOW", time.Minute),
+		BanLimit:           envInt("BAN_LIMIT", 5),
+		BanWindow:          envDuration("BAN_WINDOW", 10*time.Minute),
+		BanTTL:             envDuration("BAN_TTL", 15*time.Minute),
+		PostgresDSN:        env("POSTGRES_DSN", defaultPostgresDSN),
+		Storage:            env("STORAGE", StoragePostgres),
+		FirestoreProjectID: os.Getenv("FIRESTORE_PROJECT_ID"),
+		JWTSecret:          os.Getenv("JWT_SECRET"),
+		JWTTTL:             envDuration("JWT_TTL", 24*time.Hour),
+		AdminLogin:         env("ADMIN_LOGIN", "admin"),
+		AdminPassword:      os.Getenv("ADMIN_PASSWORD"),
 	}
 	cfg.RedisAddr = net.JoinHostPort(
 		env("REDIS_HOST", "127.0.0.1"),
@@ -79,6 +89,15 @@ func (c Config) validate() error {
 	}
 	if c.BanLimit <= 0 || c.BanWindow <= 0 || c.BanTTL <= 0 {
 		return fmt.Errorf("BAN_LIMIT, BAN_WINDOW and BAN_TTL must be positive, got %d per %s for %s", c.BanLimit, c.BanWindow, c.BanTTL)
+	}
+	switch c.Storage {
+	case StoragePostgres:
+	case StorageFirestore:
+		if c.FirestoreProjectID == "" {
+			return fmt.Errorf("FIRESTORE_PROJECT_ID is required when STORAGE=%s", StorageFirestore)
+		}
+	default:
+		return fmt.Errorf("STORAGE must be %q or %q, got %q", StoragePostgres, StorageFirestore, c.Storage)
 	}
 	if c.JWTSecret == "" {
 		return fmt.Errorf("JWT_SECRET is required")

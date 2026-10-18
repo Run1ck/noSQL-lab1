@@ -567,8 +567,12 @@ Postgres-адаптер `details` не хранит: в ответе на `POST`
    - прод — `deploy/.env` (`make up`, `make run`): облачный проект `unibooking`,
      `GOOGLE_APPLICATION_CREDENTIALS=deploy/firestore-key.json`, `FIRESTORE_EMULATOR_HOST` нет.
 
-   `STORAGE` добавляется в конфиг в contract-PR. Ключ сервисного аккаунта
-   каждый выпускает себе сам, в git он не попадает.
+   `STORAGE` уже в конфиге (`config.StoragePostgres` / `config.StorageFirestore`,
+   по умолчанию `postgres`); при `firestore` обязателен `FIRESTORE_PROJECT_ID`.
+   Клиент — `pkg/firestore.New(ctx, projectID)`: эмулятор и ключ SDK берёт из
+   `FIRESTORE_EMULATOR_HOST` и `GOOGLE_APPLICATION_CREDENTIALS`, подключение
+   проверяется чтением несуществующего документа `_health/ping` (`NotFound` — норма).
+   Ключ сервисного аккаунта каждый выпускает себе сам, в git он не попадает.
 4. **Firebase-проект `unibooking`**, база `(default)`, Native mode, Standard,
    регион `eur3`. Оба — участники проекта.
 
