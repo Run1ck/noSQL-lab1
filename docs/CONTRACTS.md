@@ -535,18 +535,24 @@ _migrations/{id}                      {appliedAt, processed, changed}
 не откатится к старым закэшированным страницам. Инвалидация — только после
 успешного коммита транзакции в Firestore, не внутри неё.
 
-## Решить до старта
+## Решено
 
-1. **ID заявок.** Автоинкремента в Firestore нет. Предложение: документ
-   `counters/requests`, который увеличивается в транзакции создания заявки.
-   API по-прежнему отдаёт `"id": 42`, импорт сохраняет ID из Postgres и
-   выставляет счётчик на максимум. Строковые ID сломали бы API и UI.
-2. **Старые адаптеры не удаляем**, переключаемся через `STORAGE=postgres|firestore`.
-   Так CRUD API первой лабы гарантированно продолжает работать, и обе базы
-   удобно сравнивать.
-3. **Конфиг**: `STORAGE`, `FIRESTORE_PROJECT_ID`, `FIRESTORE_EMULATOR_HOST`,
-   `GOOGLE_APPLICATION_CREDENTIALS`. JSON-ключ сервисного аккаунта — в `.gitignore`.
-4. **Регион Firebase-проекта** выбирается один раз навсегда — договориться заранее.
+1. **ID заявок — автоинкремент через счётчик.** Документ `counters/requests`
+   увеличивается в транзакции создания заявки. API по-прежнему отдаёт `"id": 42`,
+   ID документа — `"42"`. Импорт сохраняет ID из Postgres и выставляет счётчик
+   на максимум.
+2. **Переключатель `STORAGE=postgres|firestore`.** Старые адаптеры не удаляем:
+   CRUD API первой лабы гарантированно работает, и обе базы удобно сравнивать.
+3. **Два окружения**, у каждого свой env-файл:
+   - разработка — `deploy/.env.dev` (`make up-dev`, `make run-dev`): эмулятор,
+     `FIRESTORE_PROJECT_ID=demo-booking`, `FIRESTORE_EMULATOR_HOST=127.0.0.1:8081`;
+   - прод — `deploy/.env` (`make up`, `make run`): облачный проект `unibooking`,
+     `GOOGLE_APPLICATION_CREDENTIALS=deploy/firestore-key.json`, `FIRESTORE_EMULATOR_HOST` нет.
+
+   `STORAGE` добавляется в конфиг в contract-PR. Ключ сервисного аккаунта
+   каждый выпускает себе сам, в git он не попадает.
+4. **Firebase-проект `unibooking`**, база `(default)`, Native mode, Standard,
+   регион `eur3`. Оба — участники проекта.
 
 ## Порядок работы
 
