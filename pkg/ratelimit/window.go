@@ -25,6 +25,8 @@ type FixedWindow struct {
 	window time.Duration
 }
 
+var _ Limiter = (*FixedWindow)(nil)
+
 func NewRedis(rdb *redis.Client, prefix string, limit int, window time.Duration) *FixedWindow {
 	return &FixedWindow{rdb: rdb, prefix: prefix, limit: limit, window: ceilMillis(window)}
 }

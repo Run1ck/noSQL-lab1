@@ -37,6 +37,8 @@ type Ban struct {
 	ttl    time.Duration
 }
 
+var _ Limiter = (*Ban)(nil)
+
 func NewBan(rdb *redis.Client, limit int, window, ttl time.Duration) *Ban {
 	return &Ban{rdb: rdb, limit: limit, window: ceilMillis(window), ttl: ceilMillis(ttl)}
 }

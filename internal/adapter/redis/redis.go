@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"booking/internal/domain/cart"
+	"booking/internal/usecase"
 )
 
 const cartPrefix = "cart:"
@@ -15,6 +16,8 @@ type Redis struct {
 	redis   *redis.Client
 	cartTTL time.Duration
 }
+
+var _ usecase.Redis = (*Redis)(nil)
 
 func New(client *redis.Client, cartTTL time.Duration) *Redis {
 	return &Redis{
