@@ -363,7 +363,7 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 
 | № | Задача | Где |
 |---|---|---|
-| — | Клиент Firestore, эмулятор в compose (делается внутри contract-PR, чтобы никто не ждал) | `pkg/firestore`, `deploy/compose.yaml` (сервис `firestore`) |
+| — | Клиент Firestore, эмулятор в dev-compose (делается внутри contract-PR, чтобы никто не ждал) | `pkg/firestore`, `deploy/devcompose.yaml` (сервис `firestore`) |
 | — | Общий Firebase-проект (второго добавить участником), `firebase.json`, `.firebaserc`, деплой правил и индексов | корень репозитория |
 | 1 | Адаптер `usecase.Catalog` на Firestore: услуги | `internal/adapter/firestore/services.go` |
 | 2 | Вложенные `attributes` услуги: вместимость, корпус, этаж, оборудование | `services.go`, `internal/usecase/save_service.go`, `v1/save_service.go` |
@@ -404,7 +404,7 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 Остальное:
 - `cmd/app/main.go`, `internal/app/app.go` принадлежат Каталогу. Заявки присылают
   свои строки сборки в PR;
-- `deploy/compose.yaml`: сервис `firestore` — Каталог, остальные не трогаем.
+- `deploy/devcompose.yaml` (эмулятор и Adminer) — Каталог; `deploy/compose.yaml` — как в первой лабе.
 
 ## Точки стыка
 

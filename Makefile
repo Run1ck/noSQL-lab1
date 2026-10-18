@@ -1,10 +1,13 @@
-.PHONY: up down run test keys flush generate mockery-install
+.PHONY: up up-dev down run test keys flush generate mockery-install
 
 up:
 	docker compose -f deploy/compose.yaml up -d
 
+up-dev:
+	docker compose -f deploy/devcompose.yaml up -d
+
 down:
-	docker compose -f deploy/compose.yaml down
+	docker compose -f deploy/devcompose.yaml down
 
 run:
 	go run ./cmd/app

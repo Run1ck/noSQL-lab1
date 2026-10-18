@@ -95,9 +95,14 @@ sequenceDiagram
 
 ```bash
 cp deploy/.env.example deploy/.env   # поменяйте JWT_SECRET и ADMIN_PASSWORD
-make up                              # PostgreSQL + Redis
+make up-dev                          # PostgreSQL + Redis + эмулятор Firestore + Adminer
 make run                             # приложение на http://localhost:8080
 ```
+
+Для разработки — `deploy/devcompose.yaml`: подключает продовый `compose.yaml` и
+добавляет эмулятор Firestore на `127.0.0.1:8081` и Adminer на http://localhost:9000
+(сервер `postgres`, логин и пароль из `deploy/.env`). Продовый `deploy/compose.yaml`
+поднимает только PostgreSQL и Redis: Firestore в проде — облачный.
 
 Схема БД применяется автоматически из `migration/postgres/init.sql` при первом старте контейнера.
 Администратор создаётся при запуске приложения из `ADMIN_LOGIN` / `ADMIN_PASSWORD`,
@@ -105,7 +110,9 @@ make run                             # приложение на http://localhos
 
 | Команда | Что делает |
 |---|---|
-| `make up` / `make down` | поднять / остановить PostgreSQL и Redis |
+| `make up` | поднять продовый набор: PostgreSQL и Redis |
+| `make up-dev` | поднять набор для разработки: плюс эмулятор Firestore и Adminer |
+| `make down` | остановить всё, что поднято любой из команд выше |
 | `make run` | запустить приложение |
 | `make test` | все тесты с `-race` |
 | `make keys` | ключи Redis с типами и оставшимся TTL |

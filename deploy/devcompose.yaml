@@ -1,0 +1,26 @@
+include:
+  - compose.yaml
+
+services:
+  firestore:
+    image: google/cloud-sdk:586.0.0-emulators
+    container_name: booking-firestore
+    command: ["gcloud", "emulators", "firestore", "start", "--host-port=0.0.0.0:8081"]
+    ports:
+      - "127.0.0.1:${FIRESTORE_EMULATOR_PORT:-8081}:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  adminer:
+    image: adminer:6.1.1
+    container_name: booking-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-9000}:8080"
+    depends_on:
+      - postgres
