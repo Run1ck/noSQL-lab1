@@ -1,4 +1,4 @@
-.PHONY: up up-dev down down-dev run run-dev test keys flush generate mockery-install
+.PHONY: up up-dev down down-dev run run-dev keys flush
 
 DEV_COMPOSE = docker compose --env-file deploy/.env.dev -f deploy/devcompose.yaml
 
@@ -20,9 +20,6 @@ run:
 run-dev:
 	ENV_FILE=deploy/.env.dev go run ./cmd/app
 
-test:
-	go test ./... -race
-
 keys:
 	@docker exec booking-redis redis-cli --scan --pattern '*' | sort | while read -r k; do \
 		printf '%-32s %-8s ttl=%s\n' "$$k" "$$(docker exec booking-redis redis-cli type $$k)" "$$(docker exec booking-redis redis-cli ttl $$k)"; \
@@ -30,9 +27,3 @@ keys:
 
 flush:
 	docker exec booking-redis redis-cli flushall
-
-mockery-install:
-	go install github.com/vektra/mockery/v3@v3.2.5
-
-generate:
-	go generate ./...

@@ -35,7 +35,6 @@
 | PostgreSQL 18 | [pgx/v5](https://github.com/jackc/pgx) + пул `pgxpool`, типобезопасные запросы через [sqlc](https://sqlc.dev) |
 | Redis 7 | [go-redis/v9](https://github.com/redis/go-redis), Lua-скрипты для атомарных счётчиков, AOF + RDB |
 | Авторизация | [golang-jwt/v5](https://github.com/golang-jwt/jwt) (HS256), пароли — bcrypt |
-| Тесты | `testing`, [testify](https://github.com/stretchr/testify), моки [mockery](https://vektra.github.io/mockery/), [miniredis](https://github.com/alicebob/miniredis) |
 | Инфраструктура | Docker Compose |
 
 ## Архитектура
@@ -119,10 +118,8 @@ make run-dev                                 # приложение на http://
 | `make up-dev` / `make down-dev` | поднять / остановить контейнеры для разработки |
 | `make up` / `make down` | поднять / остановить продовые контейнеры |
 | `make run-dev` / `make run` | запустить приложение с `deploy/.env.dev` / `deploy/.env` |
-| `make test` | все тесты с `-race` |
 | `make keys` | ключи Redis с типами и оставшимся TTL |
 | `make flush` | очистить Redis |
-| `make generate` | перегенерировать моки (`make mockery-install` — один раз) |
 
 Код запросов генерируется sqlc из `internal/adapter/postgres/queries/*.sql`:
 

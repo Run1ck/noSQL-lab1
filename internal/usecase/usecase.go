@@ -15,8 +15,6 @@ import (
 	"booking/pkg/ratelimit"
 )
 
-//go:generate mockery
-
 type Redis interface {
 	GetCart(ctx context.Context, userID uuid.UUID) (*cart.Cart, error)
 	SaveCart(ctx context.Context, c *cart.Cart) error
