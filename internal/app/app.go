@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"booking/config"
+	adapterfirestore "booking/internal/adapter/firestore"
 	adapterpostgres "booking/internal/adapter/postgres"
 	adapterredis "booking/internal/adapter/redis"
 	"booking/internal/adapter/repository"
@@ -18,6 +19,7 @@ import (
 	controllerhttp "booking/internal/controller/http"
 	"booking/internal/dto"
 	"booking/internal/usecase"
+	"booking/pkg/firestore"
 	"booking/pkg/httpx"
 	"booking/pkg/postgres"
 	"booking/pkg/ratelimit"
@@ -52,6 +54,17 @@ func Run(cfg config.Config) error {
 	pg := adapterpostgres.New(pool)
 	var requests usecase.Requests = pg
 	var catalog usecase.Catalog = pg
+
+	if cfg.Storage == config.StorageFirestore {
+		fsClient, err := firestore.New(startCtx, cfg.FirestoreProjectID)
+		if err != nil {
+			return fmt.Errorf("firestore.New: %w", err)
+		}
+		defer fsClient.Close()
+
+		requests = adapterfirestore.New(fsClient)
+	}
+
 	if cfg.CacheEnabled {
 		requests = repository.NewRequests(client, requests, cfg.CacheTTL)
 		catalog = repository.NewCatalog(client, catalog, cfg.CacheTTL)
