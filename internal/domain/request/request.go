@@ -18,6 +18,7 @@ type Request struct {
 	ID          int64
 	UserID      uuid.UUID
 	Items       []Item
+	Details     *Details
 	Status      Status
 	Comment     string
 	CreatedAt   time.Time
@@ -25,7 +26,7 @@ type Request struct {
 	ProcessedBy *uuid.UUID
 }
 
-func NewFromCart(c *cart.Cart) (*Request, error) {
+func NewFromCart(c *cart.Cart, details *Details) (*Request, error) {
 	if c == nil || c.IsEmpty() {
 		return nil, ErrEmptyCart
 	}
@@ -40,6 +41,7 @@ func NewFromCart(c *cart.Cart) (*Request, error) {
 	return &Request{
 		UserID:    c.UserID,
 		Items:     items,
+		Details:   details,
 		Status:    StatusNew,
 		CreatedAt: time.Now(),
 	}, nil

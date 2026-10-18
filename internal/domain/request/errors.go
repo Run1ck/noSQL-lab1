@@ -9,4 +9,5 @@ var (
 	ErrNotOwner         = errors.New("request belongs to another user")
 	ErrSlotBooked       = errors.New("slot is already booked")
 	ErrNotFound         = errors.New("request not found")
+	ErrInvalidDetails   = errors.New("invalid request details")
 )

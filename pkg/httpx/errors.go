@@ -54,6 +54,7 @@ var errorMap = []struct {
 
 	{request.ErrEmptyCart, http.StatusUnprocessableEntity, "empty_cart"},
 	{request.ErrInvalidStatus, http.StatusBadRequest, "invalid_status"},
+	{request.ErrInvalidDetails, http.StatusBadRequest, "invalid_details"},
 	{request.ErrNotFound, http.StatusNotFound, "request_not_found"},
 	{request.ErrNotOwner, http.StatusForbidden, "forbidden"},
 	{request.ErrAlreadyProcessed, http.StatusConflict, "already_processed"},

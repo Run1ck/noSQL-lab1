@@ -29,7 +29,7 @@ func (u *UseCase) CreateRequest(ctx context.Context, input dto.CreateRequestInpu
 		return output, &ratelimit.LimitedError{Banned: true, RetryAfter: d.RetryAfter}
 	}
 
-	req, err := request.NewFromCart(c)
+	req, err := request.NewFromCart(c, nil)
 	if err != nil {
 		return output, fmt.Errorf("request.NewFromCart: %w", err)
 	}

@@ -510,7 +510,7 @@ _migrations/{id}                      {appliedAt, processed, changed}
 
 | Метод и путь | Доступ | Чей | Что |
 |---|---|---|---|
-| `POST /api/requests` | Auth | Заявки | необязательное тело `{"details": {…}}`, без тела — как раньше |
+| `POST /api/requests` | Auth | Заявки | необязательное тело `{"details": {"purpose", "participants", "needs_projector"}}`, без тела — как раньше; 400 `invalid_details` |
 | `GET /api/admin/requests/search` | Admin | Заявки | `?status=&from=&to=&participants_gte=&limit=&page_token=` → `{"items": [Request], "next_page_token"}` |
 | `GET /api/services/search` | все | Каталог | `?kind=&capacity_gte=&q=&sort=&limit=&page_token=` → `{"items": [Service], "next_page_token"}` |
 | `GET /api/kinds` | все | Каталог | `[{"code", "title", "description"}]` |
@@ -518,6 +518,11 @@ _migrations/{id}                      {appliedAt, processed, changed}
 | `GET /api/admin/stats/changes` | Admin | Каталог | `?from=&to=&interval=hour\|day` → `{"buckets": [{"start", "total", "requests": {…}, "services": {…}, "kinds": {…}}]}` |
 
 Новые поля в объектах: `Request.details`, `Service.attributes`, `Service.kind_title`.
+
+`Request.details` — `null`, если не указаны, иначе
+`{"purpose": "Семинар по БД", "participants": 25, "needs_projector": true}`:
+`purpose` — от 1 до 200 символов после обрезки пробелов, `participants` — от 1 до 500.
+В REST поля в snake_case, в Firestore — `details: {purpose, participants, needsProjector}`.
 
 ## Ключи Redis — что добавляется
 
