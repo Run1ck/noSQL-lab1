@@ -38,7 +38,7 @@ type Config struct {
 }
 
 func Load() (Config, error) {
-	_ = godotenv.Load("deploy/.env", ".env")
+	_ = godotenv.Load(env("ENV_FILE", "deploy/.env"), ".env")
 
 	cfg := Config{
 		PORT:          env("PORT", ":8080"),
