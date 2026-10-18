@@ -4,3 +4,4 @@ CLAUDE.md
 .DS_Store
 deploy/firestore-key.json
 *firebase-adminsdk*.json
+deploy/.env.dev

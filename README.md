@@ -94,15 +94,21 @@ sequenceDiagram
 Нужны Go 1.26+ и Docker.
 
 ```bash
-cp deploy/.env.example deploy/.env   # поменяйте JWT_SECRET и ADMIN_PASSWORD
-make up-dev                          # PostgreSQL + Redis + эмулятор Firestore + Adminer
-make run                             # приложение на http://localhost:8080
+cp deploy/.env.dev.example deploy/.env.dev   # поменяйте JWT_SECRET и ADMIN_PASSWORD
+make up-dev                                  # PostgreSQL + Redis + эмулятор Firestore + Adminer
+make run-dev                                 # приложение на http://localhost:8080
 ```
 
-Для разработки — `deploy/devcompose.yaml`: подключает продовый `compose.yaml` и
-добавляет эмулятор Firestore на `127.0.0.1:8081` и Adminer на http://localhost:9000
-(сервер `postgres`, логин и пароль из `deploy/.env`). Продовый `deploy/compose.yaml`
-поднимает только PostgreSQL и Redis: Firestore в проде — облачный.
+Окружений два, у каждого свой env-файл:
+
+| | Разработка | Прод |
+|---|---|---|
+| env-файл | `deploy/.env.dev` из `.env.dev.example` | `deploy/.env` из `.env.example` |
+| Контейнеры | `make up-dev`: `devcompose.yaml` — то же, что прод, плюс эмулятор Firestore на `127.0.0.1:8081` и Adminer на http://localhost:9000 | `make up`: `compose.yaml` — PostgreSQL и Redis |
+| Приложение | `make run-dev` | `make run` |
+| Firestore | эмулятор, `FIRESTORE_EMULATOR_HOST` | облачный проект, ключ сервисного аккаунта в `deploy/firestore-key.json` |
+
+В Adminer: сервер `postgres`, логин и пароль — из env-файла.
 
 Схема БД применяется автоматически из `migration/postgres/init.sql` при первом старте контейнера.
 Администратор создаётся при запуске приложения из `ADMIN_LOGIN` / `ADMIN_PASSWORD`,
@@ -110,10 +116,9 @@ make run                             # приложение на http://localhos
 
 | Команда | Что делает |
 |---|---|
-| `make up` | поднять продовый набор: PostgreSQL и Redis |
-| `make up-dev` | поднять набор для разработки: плюс эмулятор Firestore и Adminer |
-| `make down` | остановить всё, что поднято любой из команд выше |
-| `make run` | запустить приложение |
+| `make up-dev` / `make down-dev` | поднять / остановить контейнеры для разработки |
+| `make up` / `make down` | поднять / остановить продовые контейнеры |
+| `make run-dev` / `make run` | запустить приложение с `deploy/.env.dev` / `deploy/.env` |
 | `make test` | все тесты с `-race` |
 | `make keys` | ключи Redis с типами и оставшимся TTL |
 | `make flush` | очистить Redis |
@@ -127,7 +132,7 @@ go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate
 
 ## Конфигурация
 
-Переменные окружения или `deploy/.env`.
+Переменные окружения или env-файл: по умолчанию `deploy/.env`, другой задаётся через `ENV_FILE` (так делает `make run-dev`). Уже заданные в окружении переменные файл не перебивает.
 
 | Переменная | По умолчанию | Назначение |
 |---|---|---|
