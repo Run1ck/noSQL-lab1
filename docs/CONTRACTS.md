@@ -70,7 +70,6 @@
 - `pkg/httpx/{json,errors}.go` (`module.go` больше не используется — маршруты в `router.go`)
 - `internal/usecase/usecase.go` — интерфейсы `Postgres`, `Redis`, `UseCase`, `New`: каждый дописывает свои методы
 - `internal/controller/http/router.go`, `internal/controller/http/v1/v1.go` — каждый дописывает свои маршруты
-- `.mockery.yml`, `internal/usecase/mocks/` (генерируется `make generate`)
 - `config/config.go`, `deploy/.env.example`
 - этот файл
 
@@ -105,7 +104,6 @@ pkg/ratelimit               лимитер на Redis (Lua): интерфейс 
 - Хендлер: собрать `dto.XInput` из запроса (JSON — `httpx.DecodeJSON`, путь,
   query, пользователь — `auth.FromContext`), вызвать use case, ответить
   `httpx.WriteJSON` или `httpx.WriteError` (статус и код — из `errorMap`).
-- Тесты use case'ов — пакет `usecase_test` и моки mockery (`internal/usecase/mocks`).
 
 ## Точки стыка
 
@@ -355,7 +353,7 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 | 5 | Счётчики `requests.*` в проекции изменений | `requests.go` через общий `stats.go` |
 | 6 | **Индекс из задания** `(status.code ASC, createdAt DESC)`: ошибка на реальном проекте → создание → Query Explain | своя запись в `firestore.indexes.json`, материалы — `research/firestore/` |
 | 7 | Импорт заявок из Postgres в формате v1 + **миграция из задания** v1 → v2 (статус-строка → объект) | `migration/firestore/{002_import_requests,004_request_status_object}.go` |
-| 7 | Правила для `requests`, `bookings`, `ref_statuses` и тесты к ним | свои блоки в `firestore.rules`, `test/rules/requests.test.js` |
+| 7 | Правила для `requests`, `bookings`, `ref_statuses`; проверка вручную в Rules Playground / на эмуляторе | свои блоки в `firestore.rules` |
 | 8 | Кэш админского поиска с версионированными ключами; кэш расписания теперь поверх броней в Firestore | `internal/adapter/repository/requests.go` |
 | UI | Мои заявки, обработка в админке: фильтры, пагинация, детали | `web/static/requests.js`, `web/static/admin-requests.js` |
 
@@ -388,7 +386,7 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 - `internal/domain/**` — `request.Details`, `request.Filter`, `service.Attributes`,
   `service.KindInfo`, `service.Filter`, новый пакет `internal/domain/stats`;
 - `internal/usecase/usecase.go` — разбиение `Postgres` на `Users`, `Requests`,
-  `Catalog`, `Stats` и переименование вызовов в use case'ах, `.mockery.yml`, `internal/usecase/mocks/`;
+  `Catalog`, `Stats` и переименование вызовов в use case'ах;
 - `internal/adapter/firestore/{firestore,stats}.go` — общие хелперы (разбор
   ошибок, ключ интервала, инкремент счётчиков проекции);
 - `internal/adapter/repository/repository.go` — `load`, `store`, `invalidate`;
@@ -418,7 +416,8 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 | Раннер миграций | Каталог | Заявки добавляют свои миграции |
 | `firestore.rules`, `firestore.indexes.json` | каждый свои блоки | деплоит Каталог |
 
-Пока раннера нет, Заявки гоняют свои миграции из тестов на эмуляторе.
+Пока раннера нет, Заявки запускают свои миграции вручную на эмуляторе: каждую дважды,
+второй прогон должен показать `changed: 0`.
 
 Интерфейсы, предложение:
 
@@ -523,6 +522,12 @@ _migrations/{id}                      {appliedAt, processed, changed}
 `{"purpose": "Семинар по БД", "participants": 25, "needs_projector": true}`:
 `purpose` — от 1 до 200 символов после обрезки пробелов, `participants` — от 1 до 500.
 В REST поля в snake_case, в Firestore — `details: {purpose, participants, needsProjector}`.
+
+Оформление с `details`: тело читается `httpx.DecodeOptionalJSON` (пустое тело — не
+ошибка), характеристики проверяются `request.NewDetails` **до** корзины и бана —
+неверный ввод отвечает `invalid_details` и не тратит попытку из лимита заявок.
+Postgres-адаптер `details` не хранит: в ответе на `POST` они есть, в следующих
+`GET` при `STORAGE=postgres` — `null`. Хранит их только Firestore.
 
 ## Ключи Redis — что добавляется
 

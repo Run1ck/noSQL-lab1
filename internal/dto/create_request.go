@@ -5,5 +5,6 @@ import (
 )
 
 type CreateRequestInput struct {
-	UserID uuid.UUID
+	UserID  uuid.UUID       `json:"-"`
+	Details *RequestDetails `json:"details"`
 }

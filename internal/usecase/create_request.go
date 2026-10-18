@@ -13,6 +13,11 @@ import (
 func (u *UseCase) CreateRequest(ctx context.Context, input dto.CreateRequestInput) (dto.Request, error) {
 	var output dto.Request
 
+	details, err := newDetails(input.Details)
+	if err != nil {
+		return output, fmt.Errorf("request.NewDetails: %w", err)
+	}
+
 	c, err := u.redis.GetCart(ctx, input.UserID)
 	if err != nil {
 		return output, fmt.Errorf("u.redis.GetCart: %w", err)
@@ -29,7 +34,7 @@ func (u *UseCase) CreateRequest(ctx context.Context, input dto.CreateRequestInpu
 		return output, &ratelimit.LimitedError{Banned: true, RetryAfter: d.RetryAfter}
 	}
 
-	req, err := request.NewFromCart(c, nil)
+	req, err := request.NewFromCart(c, details)
 	if err != nil {
 		return output, fmt.Errorf("request.NewFromCart: %w", err)
 	}

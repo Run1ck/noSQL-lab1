@@ -27,8 +27,23 @@ func toRequest(req *request.Request) dto.Request {
 	for _, item := range items {
 		output.Items = append(output.Items, dto.RequestItem{ServiceID: item.ServiceID, Date: item.Date.String()})
 	}
+	if req.Details != nil {
+		output.Details = &dto.RequestDetails{
+			Purpose:        req.Details.Purpose,
+			Participants:   req.Details.Participants,
+			NeedsProjector: req.Details.NeedsProjector,
+		}
+	}
 
 	return output
+}
+
+func newDetails(d *dto.RequestDetails) (*request.Details, error) {
+	if d == nil {
+		return nil, nil
+	}
+
+	return request.NewDetails(d.Purpose, d.Participants, d.NeedsProjector)
 }
 
 func toRequests(reqs []*request.Request) dto.RequestsOutput {

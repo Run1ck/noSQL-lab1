@@ -18,9 +18,16 @@ func (h *Handlers) CreateRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := dto.CreateRequestInput{
-		UserID: p.UserID,
+	input := dto.CreateRequestInput{}
+
+	err := httpx.DecodeOptionalJSON(w, r, &input)
+	if err != nil {
+		httpx.WriteError(w, err)
+
+		return
 	}
+
+	input.UserID = p.UserID
 
 	output, err := h.usecase.CreateRequest(ctx, input)
 	if err != nil {

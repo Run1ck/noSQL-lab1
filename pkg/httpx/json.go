@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -23,7 +24,15 @@ func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(dst); err != nil {
-		return fmt.Errorf("%w: %v", ErrBadRequest, err)
+		return fmt.Errorf("%w: %w", ErrBadRequest, err)
 	}
 	return nil
+}
+
+func DecodeOptionalJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	err := DecodeJSON(w, r, dst)
+	if errors.Is(err, io.EOF) {
+		return nil
+	}
+	return err
 }
