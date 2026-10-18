@@ -18,12 +18,12 @@ func (u *UseCase) AddCartItem(ctx context.Context, input dto.AddCartItemInput) (
 		return output, fmt.Errorf("service.ParseDate: %w", err)
 	}
 
-	svc, err := u.postgres.GetService(ctx, input.ServiceID)
+	s, err := u.catalog.GetService(ctx, input.ServiceID)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetService: %w", err)
+		return output, fmt.Errorf("u.catalog.GetService: %w", err)
 	}
 
-	if !svc.Active {
+	if !s.Active {
 		return output, cart.ErrServiceUnavailable
 	}
 
@@ -31,13 +31,13 @@ func (u *UseCase) AddCartItem(ctx context.Context, input dto.AddCartItemInput) (
 		return output, cart.ErrPastDate
 	}
 
-	bookings, err := u.postgres.GetBookings(ctx, date)
+	bookings, err := u.requests.GetBookings(ctx, date)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetBookings: %w", err)
+		return output, fmt.Errorf("u.requests.GetBookings: %w", err)
 	}
 
 	for _, b := range bookings {
-		if b.ServiceID == svc.ID {
+		if b.ServiceID == s.ID {
 			return output, cart.ErrSlotBooked
 		}
 	}
@@ -47,7 +47,7 @@ func (u *UseCase) AddCartItem(ctx context.Context, input dto.AddCartItemInput) (
 		return output, fmt.Errorf("u.redis.GetCart: %w", err)
 	}
 
-	c.AddItem(cart.Item{ServiceID: svc.ID, Date: date})
+	c.AddItem(cart.Item{ServiceID: s.ID, Date: date})
 
 	err = u.redis.SaveCart(ctx, c)
 	if err != nil {

@@ -10,9 +10,9 @@ import (
 func (u *UseCase) RejectRequest(ctx context.Context, input dto.ProcessRequestInput) (dto.Request, error) {
 	var output dto.Request
 
-	req, err := u.postgres.GetRequest(ctx, input.ID)
+	req, err := u.requests.GetRequest(ctx, input.ID)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetRequest: %w", err)
+		return output, fmt.Errorf("u.requests.GetRequest: %w", err)
 	}
 
 	err = req.Reject(input.AdminID, input.Comment)
@@ -20,9 +20,9 @@ func (u *UseCase) RejectRequest(ctx context.Context, input dto.ProcessRequestInp
 		return output, fmt.Errorf("req.Reject: %w", err)
 	}
 
-	err = u.postgres.Reject(ctx, req)
+	err = u.requests.Reject(ctx, req)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.Reject: %w", err)
+		return output, fmt.Errorf("u.requests.Reject: %w", err)
 	}
 
 	return toRequest(req), nil

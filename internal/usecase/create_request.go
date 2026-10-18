@@ -39,9 +39,9 @@ func (u *UseCase) CreateRequest(ctx context.Context, input dto.CreateRequestInpu
 		return output, fmt.Errorf("request.NewFromCart: %w", err)
 	}
 
-	err = u.postgres.CreateRequest(ctx, req)
+	err = u.requests.CreateRequest(ctx, req)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.CreateRequest: %w", err)
+		return output, fmt.Errorf("u.requests.CreateRequest: %w", err)
 	}
 
 	err = u.redis.DeleteCart(ctx, input.UserID)

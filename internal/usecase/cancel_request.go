@@ -10,9 +10,9 @@ import (
 func (u *UseCase) CancelRequest(ctx context.Context, input dto.CancelRequestInput) (dto.Request, error) {
 	var output dto.Request
 
-	req, err := u.postgres.GetRequest(ctx, input.ID)
+	req, err := u.requests.GetRequest(ctx, input.ID)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetRequest: %w", err)
+		return output, fmt.Errorf("u.requests.GetRequest: %w", err)
 	}
 
 	err = req.Cancel(input.UserID)
@@ -20,9 +20,9 @@ func (u *UseCase) CancelRequest(ctx context.Context, input dto.CancelRequestInpu
 		return output, fmt.Errorf("req.Cancel: %w", err)
 	}
 
-	err = u.postgres.Cancel(ctx, req)
+	err = u.requests.Cancel(ctx, req)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.Cancel: %w", err)
+		return output, fmt.Errorf("u.requests.Cancel: %w", err)
 	}
 
 	return toRequest(req), nil

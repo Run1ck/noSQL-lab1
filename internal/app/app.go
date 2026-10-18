@@ -49,15 +49,18 @@ func Run(cfg config.Config) error {
 	}
 	defer client.Close()
 
-	var pg usecase.Postgres = adapterpostgres.New(pool)
+	pg := adapterpostgres.New(pool)
+	var requests usecase.Requests = pg
+	var catalog usecase.Catalog = pg
 	if cfg.CacheEnabled {
-		pg = repository.New(client, pg, cfg.CacheTTL)
+		requests = repository.NewRequests(client, requests, cfg.CacheTTL)
+		catalog = repository.NewCatalog(client, catalog, cfg.CacheTTL)
 	}
 	tokens := auth.NewJWT(cfg.JWTSecret, cfg.JWTTTL)
 	apiLimit := ratelimit.NewRedis(client, "rl:api", cfg.RateLimit, cfg.RateWindow)
 	banLimit := ratelimit.NewBan(client, cfg.BanLimit, cfg.BanWindow, cfg.BanTTL)
 
-	uc := usecase.New(pg, adapterredis.New(client, cfg.CartTTL), tokens, banLimit)
+	uc := usecase.New(pg, requests, catalog, adapterredis.New(client, cfg.CartTTL), tokens, banLimit)
 
 	admin, err := uc.EnsureAdmin(startCtx, dto.EnsureAdminInput{Login: cfg.AdminLogin, Password: cfg.AdminPassword})
 	if err != nil {

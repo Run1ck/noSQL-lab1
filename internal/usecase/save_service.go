@@ -21,9 +21,9 @@ func (u *UseCase) SaveService(ctx context.Context, input dto.SaveServiceInput) (
 		return output, fmt.Errorf("service.New: %w", err)
 	}
 
-	err = u.postgres.SaveService(ctx, s)
+	err = u.catalog.SaveService(ctx, s)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.SaveService: %w", err)
+		return output, fmt.Errorf("u.catalog.SaveService: %w", err)
 	}
 
 	return toService(s), nil

@@ -10,9 +10,9 @@ import (
 
 func (u *UseCase) ListRequests(ctx context.Context, input dto.ListRequestsInput) (dto.RequestsOutput, error) {
 	if input.Status == "" {
-		reqs, err := u.postgres.GetRequests(ctx)
+		reqs, err := u.requests.GetRequests(ctx)
 		if err != nil {
-			return dto.RequestsOutput{}, fmt.Errorf("u.postgres.GetRequests: %w", err)
+			return dto.RequestsOutput{}, fmt.Errorf("u.requests.GetRequests: %w", err)
 		}
 
 		return toRequests(reqs), nil
@@ -23,9 +23,9 @@ func (u *UseCase) ListRequests(ctx context.Context, input dto.ListRequestsInput)
 		return dto.RequestsOutput{}, fmt.Errorf("request.ParseStatus: %w", err)
 	}
 
-	reqs, err := u.postgres.GetRequestsByStatus(ctx, status)
+	reqs, err := u.requests.GetRequestsByStatus(ctx, status)
 	if err != nil {
-		return dto.RequestsOutput{}, fmt.Errorf("u.postgres.GetRequestsByStatus: %w", err)
+		return dto.RequestsOutput{}, fmt.Errorf("u.requests.GetRequestsByStatus: %w", err)
 	}
 
 	return toRequests(reqs), nil

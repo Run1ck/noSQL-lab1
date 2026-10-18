@@ -21,12 +21,12 @@ func (u *UseCase) EnsureAdmin(ctx context.Context, input dto.EnsureAdminInput) (
 		return output, fmt.Errorf("user.New: %w", err)
 	}
 
-	err = u.postgres.CreateUser(ctx, admin)
+	err = u.users.CreateUser(ctx, admin)
 	if errors.Is(err, user.ErrLoginTaken) {
 		return output, nil
 	}
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.CreateUser: %w", err)
+		return output, fmt.Errorf("u.users.CreateUser: %w", err)
 	}
 
 	output.Created = true

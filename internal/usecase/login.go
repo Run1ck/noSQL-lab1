@@ -14,12 +14,12 @@ import (
 func (u *UseCase) Login(ctx context.Context, input dto.LoginInput) (dto.LoginOutput, error) {
 	var output dto.LoginOutput
 
-	usr, err := u.postgres.GetUserByLogin(ctx, strings.ToLower(strings.TrimSpace(input.Login)))
+	usr, err := u.users.GetUserByLogin(ctx, strings.ToLower(strings.TrimSpace(input.Login)))
 	if errors.Is(err, user.ErrNotFound) {
 		return output, user.ErrInvalidCredentials
 	}
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetUserByLogin: %w", err)
+		return output, fmt.Errorf("u.users.GetUserByLogin: %w", err)
 	}
 
 	err = usr.CheckPassword(input.Password)

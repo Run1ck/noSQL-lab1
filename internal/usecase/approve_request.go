@@ -10,9 +10,9 @@ import (
 func (u *UseCase) ApproveRequest(ctx context.Context, input dto.ProcessRequestInput) (dto.Request, error) {
 	var output dto.Request
 
-	req, err := u.postgres.GetRequest(ctx, input.ID)
+	req, err := u.requests.GetRequest(ctx, input.ID)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetRequest: %w", err)
+		return output, fmt.Errorf("u.requests.GetRequest: %w", err)
 	}
 
 	err = req.Approve(input.AdminID, input.Comment)
@@ -20,9 +20,9 @@ func (u *UseCase) ApproveRequest(ctx context.Context, input dto.ProcessRequestIn
 		return output, fmt.Errorf("req.Approve: %w", err)
 	}
 
-	err = u.postgres.Approve(ctx, req)
+	err = u.requests.Approve(ctx, req)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.Approve: %w", err)
+		return output, fmt.Errorf("u.requests.Approve: %w", err)
 	}
 
 	return toRequest(req), nil

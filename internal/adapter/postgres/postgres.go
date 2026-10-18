@@ -19,7 +19,11 @@ type Postgres struct {
 	users    *UserRepo
 }
 
-var _ usecase.Postgres = (*Postgres)(nil)
+var (
+	_ usecase.Users    = (*Postgres)(nil)
+	_ usecase.Requests = (*Postgres)(nil)
+	_ usecase.Catalog  = (*Postgres)(nil)
+)
 
 func New(pool *pgxpool.Pool) *Postgres {
 	return &Postgres{

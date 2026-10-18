@@ -67,7 +67,7 @@
 - `internal/domain/**`
 - `internal/auth/auth.go`
 - `pkg/ratelimit/ratelimit.go`
-- `pkg/httpx/{json,errors}.go` (`module.go` больше не используется — маршруты в `router.go`)
+- `pkg/httpx/{json,errors,middlewares}.go`
 - `internal/usecase/usecase.go` — интерфейсы `Postgres`, `Redis`, `UseCase`, `New`: каждый дописывает свои методы
 - `internal/controller/http/router.go`, `internal/controller/http/v1/v1.go` — каждый дописывает свои маршруты
 - `config/config.go`, `deploy/.env.example`
@@ -419,7 +419,10 @@ UI хранит токен в `localStorage`. Даты — `YYYY-MM-DD` (так 
 Пока раннера нет, Заявки запускают свои миграции вручную на эмуляторе: каждую дважды,
 второй прогон должен показать `changed: 0`.
 
-Интерфейсы, предложение:
+Интерфейсы. Разбиение `Postgres` на `Users`, `Requests` и `Catalog` уже в коде
+(`internal/usecase/usecase.go`) — пока с методами первой лабы. `SearchRequests`,
+`SearchServices`, `GetKinds`, `SaveKind` и интерфейс `Stats` добавляются вместе
+со своими фичами. Итоговый вид:
 
 ```go
 type Users interface {
@@ -461,6 +464,11 @@ type Stats interface {
 `adapter/postgres` из первой лабы продолжает реализовывать `Users`, `Requests`
 (без `SearchRequests`) и `Catalog` (без новых методов) — переключение через
 `STORAGE`, см. «Решить до старта».
+
+Сборка: `usecase.New(users, requests, catalog, redis, tokens, ban)`. Кэш-декоратор
+разделён на два: `repository.NewRequests` (расписание, Заявки) и
+`repository.NewCatalog` (услуги, Каталог); общие `load`, `store`, `invalidate` —
+в `repository.go`. При `CACHE_ENABLED=false` в `usecase.New` идут адаптеры напрямую.
 
 ## Коллекции Firestore — предложение
 

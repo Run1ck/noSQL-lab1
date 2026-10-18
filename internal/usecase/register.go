@@ -16,9 +16,9 @@ func (u *UseCase) Register(ctx context.Context, input dto.RegisterInput) (dto.Us
 		return output, fmt.Errorf("user.New: %w", err)
 	}
 
-	err = u.postgres.CreateUser(ctx, usr)
+	err = u.users.CreateUser(ctx, usr)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.CreateUser: %w", err)
+		return output, fmt.Errorf("u.users.CreateUser: %w", err)
 	}
 
 	return toUser(usr), nil

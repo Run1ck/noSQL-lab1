@@ -35,9 +35,9 @@ func (u *UseCase) GetSchedule(ctx context.Context, input dto.GetScheduleInput) (
 	for i := range days {
 		date := addDays(from, i)
 
-		bookings, err := u.postgres.GetBookings(ctx, date)
+		bookings, err := u.requests.GetBookings(ctx, date)
 		if err != nil {
-			return output, fmt.Errorf("u.postgres.GetBookings: %w", err)
+			return output, fmt.Errorf("u.requests.GetBookings: %w", err)
 		}
 
 		booked := make([]string, 0, len(bookings))

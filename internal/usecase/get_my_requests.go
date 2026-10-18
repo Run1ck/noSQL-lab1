@@ -8,9 +8,9 @@ import (
 )
 
 func (u *UseCase) GetMyRequests(ctx context.Context, input dto.GetMyRequestsInput) (dto.RequestsOutput, error) {
-	reqs, err := u.postgres.GetRequestsByUser(ctx, input.UserID)
+	reqs, err := u.requests.GetRequestsByUser(ctx, input.UserID)
 	if err != nil {
-		return dto.RequestsOutput{}, fmt.Errorf("u.postgres.GetRequestsByUser: %w", err)
+		return dto.RequestsOutput{}, fmt.Errorf("u.requests.GetRequestsByUser: %w", err)
 	}
 
 	return toRequests(reqs), nil

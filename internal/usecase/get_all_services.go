@@ -11,9 +11,9 @@ import (
 func (u *UseCase) GetAllServices(ctx context.Context) (dto.GetServicesOutput, error) {
 	var output dto.GetServicesOutput
 
-	services, err := u.postgres.GetServices(ctx)
+	services, err := u.catalog.GetServices(ctx)
 	if err != nil {
-		return output, fmt.Errorf("u.postgres.GetServices: %w", err)
+		return output, fmt.Errorf("u.catalog.GetServices: %w", err)
 	}
 
 	output.Services = make([]dto.Service, 0, len(services))
